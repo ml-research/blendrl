@@ -17,7 +17,7 @@ def reward_function(self) -> float:
 
     # reward for moving closer to the top
     if player.prev_y > player.y:
-        # Progress upward
+        # progress upward
         reward = 1.0
     elif player.prev_y < player.y:
         # moving downward (penalty)
