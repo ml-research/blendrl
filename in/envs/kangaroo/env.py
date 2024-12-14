@@ -2,16 +2,10 @@ from typing import Sequence
 import torch
 from nudge.env import NudgeBaseEnv
 from ocatari.core import OCAtari
-from hackatari.core import HackAtari
-import numpy as np
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
-import gymnasium
 import gymnasium as gym
-from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack
-
-from utils import load_cleanrl_envs
+import numpy as np
 
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip
@@ -73,6 +67,8 @@ class NudgeEnv(NudgeBaseEnv):
         "right": 3,
         "left": 4,
         "down": 5,
+        "fire_left": 12,
+        "fire_right": 11
     }
     pred_names: Sequence
 
@@ -90,30 +86,16 @@ class NudgeEnv(NudgeBaseEnv):
             seed (int): Seed for the environment.
         """
         super().__init__(mode)
-        self.env = HackAtari(
+        self.env = OCAtari(
             env_name="ALE/Kangaroo-v5",
             mode="ram",
-            obs_mode="ori",
-            modifs=[
-                ("disable_coconut"),
-                ("random_init"),
-                ("change_level0"),
-            ],  # modifs=[("disable_coconut"),  ("change_level0")],\
-            # modifs=[("disable_coconut"), ("change_level0"), ("invert_ladders")],\
-            rewardfunc_path="in/envs/kangaroo/blenderl_reward.py",
             render_mode=render_mode,
-            render_oc_overlay=render_oc_overlay,
-        )
-
-        # self.env_ori = HackAtari(env_name="ALE/Kangaroo-v5", mode="ram", obs_mode="ori",\
-        #     modifs=[("disable_coconut"), ("random_init")], #, ("change_level0")],\
-        #     rewardfunc_path="in/envs/kangaroo/blenderl_reward.py",\
-        #     render_mode=render_mode, render_oc_overlay=render_oc_overlay)
+            render_oc_overlay=render_oc_overlay)
 
         # apply wrapper to _env
         self.env._env = make_env(self.env._env)
         # self.env_ori._env = make_env_ori(self.env_ori._env)
-        self.n_actions = 6
+        self.n_actions = len(self.pred2action)
         self.n_raw_actions = 18
         self.n_objects = 49
         self.n_features = 4  # visible, x-pos, y-pos, right-facing
@@ -136,12 +118,9 @@ class NudgeEnv(NudgeBaseEnv):
             neural_state (torch.Tensor): Neural state of the environment.
         """
         raw_state, _ = self.env.reset(seed=self.seed)
-        # self.raw_state_ori, _ = self.env_ori.reset(seed=self.seed)
         state = self.env.objects
         self.ocatari_state = state
-        logic_state, neural_state = self.extract_logic_state(
-            state
-        ), self.extract_neural_state(raw_state)
+        logic_state, neural_state = self.extract_logic_state(state), self.extract_neural_state(raw_state)
         logic_state = logic_state.unsqueeze(0)
         return logic_state, neural_state
 
@@ -161,21 +140,19 @@ class NudgeEnv(NudgeBaseEnv):
             infos (dict): Additional information.
         """
         raw_state, reward, truncations, done, infos = self.env.step(action)
-        # self.raw_state_ori, _, _, _, _ = self.env_ori.step(action)
         state = self.env.objects
         self.ocatari_state = state
         logic_state, neural_state = self.convert_state(state, raw_state)
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
 
-    def extract_logic_state(self, input_state):
+    def extract_logic_state(self, raw_state):
         """
         Extracts the logic state from the input state.
         Args:
             input_state (list): List of objects in the environment.
         Returns:
             torch.Tensor: Logic state.
-
         Comment:
             in ocatari/ram/kangaroo.py :
                 MAX_ESSENTIAL_OBJECTS = {
@@ -197,7 +174,7 @@ class NudgeEnv(NudgeBaseEnv):
 
         obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
 
-        for obj in input_state:
+        for obj in raw_state:
             if obj.category not in self.relevant_objects:
                 continue
             idx = self.obj_offsets[obj.category] + obj_count[obj.category]
@@ -212,13 +189,8 @@ class NudgeEnv(NudgeBaseEnv):
             self.bboxes[idx] = th.tensor(obj.xywh)
         return state
 
-        # TODO: Compute distances to Joey and Enemies
 
-    # def object_id_to_ocatari_object(self, object_id):
-    #     # obj28 -> Ladder at (x, y), (h, w)
-    #     passa
-
-    def extract_neural_state(self, raw_input_state):
+    def extract_neural_state(self, raw_state):
         """
         Extracts the neural state from the raw input state.
         Args:
@@ -226,10 +198,11 @@ class NudgeEnv(NudgeBaseEnv):
         Returns:
             torch.Tensor: Neural state.
         """
-        return torch.Tensor(raw_input_state).unsqueeze(0)  # .float()
+        return torch.Tensor(raw_state).unsqueeze(0)
 
     def close(self):
         """
         Close the environment.
         """
-        self.env.close()
+        for env in self.envs:
+            env.close()

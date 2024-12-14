@@ -4,3 +4,8 @@ right_ladder:1:image
 left_ladder:1:image
 neural_agent:1:image
 logic_agent:1:image
+left:1:image
+right:1:image
+up:1:image
+fire_left:1:image
+fire_right:1:image

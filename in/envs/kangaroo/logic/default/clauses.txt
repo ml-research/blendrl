@@ -1,3 +1,16 @@
+fire_left(X):-close_by_monkey(P,M),on_left(P,M).
+fire_right(X):-close_by_monkey(P,M),on_right(P,M).
 up_ladder(X):-on_ladder(P,L),same_level_ladder(P,L).
 right_ladder(X):-left_of_ladder(P,L),same_level_ladder(P,L).
 left_ladder(X):-right_of_ladder(P,L),same_level_ladder(P,L).
+noop(X):-nothing_around(X).
+left(X):-close_by_fallingcoconut(P,FC),on_right(P,FC).
+right(X):-close_by_fallingcoconut(P,FC),on_left(P,FC).
+up(X):-close_by_throwncoconut(P,TC).
+left(X):-close_by_fruit(P,F),on_left(P,F).
+right(X):-close_by_fruit(P,F),on_right(P,F).
+up(X):-close_by_fruit(P,F),above(P,F).
+fire_left(X):-close_by_fallingcoconut(P,FC),on_left(P,FC).
+fire_right(X):-close_by_fallingcoconut(P,FC),on_right(P,FC).
+fire_left(X):-close_by_throwncoconut(P,TC),on_left(P,TC).
+fire_right(X):-close_by_throwncoconut(P,TC),on_right(P,TC).

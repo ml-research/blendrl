@@ -55,7 +55,7 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
 
     # Algorithm specific arguments
-    env_id: str = "Seaquest-v4"
+    env_id: str = "Kangaroo-v5"
     """the id of the environment"""
     total_timesteps: int = 60000000
     """total timesteps of the experiments"""
@@ -97,7 +97,7 @@ class Args:
     """the number of iterations (computed in runtime)"""
     
     # added
-    env_name: str = "seaquest"
+    env_name: str = "kangaroo"
     """the name of the environment"""
     algorithm: str = "blender"
     """the algorithm used in the agent"""
@@ -179,7 +179,7 @@ def main():
     agent = BlenderActorCritic(envs, args.rules, args.actor_mode, args.blender_mode, args.blend_function, args.reasoner, device)
     if args.pretrained:
         # load neural agent weights
-        agent.visual_neural_actor.load_state_dict(torch.load("models/neural_ppo_agent_Seaquest-v4.pth"))
+        agent.visual_neural_actor.load_state_dict(torch.load("models/neural_ppo_agent_Kangaroo-v5.pth"))
         print("Pretrained neural agent loaded!!!")
         agent.to(device)
         

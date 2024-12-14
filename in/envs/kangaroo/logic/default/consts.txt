@@ -1,4 +1,3 @@
-
 oplayer:obj1
 
 ochild:obj2

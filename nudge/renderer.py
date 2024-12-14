@@ -27,7 +27,7 @@ class Renderer:
 
     def __init__(self,
                  agent_path: str = None,
-                 env_name: str = "seaquest",
+                 env_name: str = "kangaroo",
                  device: str = "cpu",
                  fps: int = None,
                  deterministic=True,

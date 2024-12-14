@@ -6,7 +6,6 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-
 from nsfr.common import get_nsfr_model
 from nsfr.utils.common import load_module
 from nudge.env import NudgeBaseEnv
