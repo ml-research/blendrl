@@ -1,8 +1,6 @@
-import time
 from typing import Sequence
 import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
-from hackatari.core import HackAtari
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
 import gymnasium as gym
