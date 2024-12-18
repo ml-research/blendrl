@@ -4,3 +4,10 @@ left_to_diver(X):-right_of_diver(P,D),visible_diver(D),not_full_divers(X).
 right_to_diver(X):-left_of_diver(P,D),visible_diver(D),not_full_divers(X).
 up_to_diver(X):-deeper_than_diver(P,D),visible_diver(D),not_full_divers(X).
 down_to_diver(X):-higher_than_diver(P,D),visible_diver(D),not_full_divers(X).
+fire_left(X):-left_aim(X),visible_enemy(E).
+fire_right(X):-right_aim(X),visible_enemy(E).
+left_aim(X):-left_of_enemy(P,E),visible_enemy(E).
+right_aim(X):-right_of_enemy(P,E),visible_enemy(E).
+up_aim(X):-higher_than_enemy(P,E),visible_enemy(E).
+down_aim(X):-deeper_than_enemy(P,E),visible_enemy(E).
+up_rescue(X):-full_divers(X),visible_diver(D).

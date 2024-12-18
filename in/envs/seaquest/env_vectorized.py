@@ -145,4 +145,5 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         return raw_input_state
 
     def close(self):
-        self.env.close()
+        for env in self.envs:
+            env.close()
