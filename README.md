@@ -14,7 +14,6 @@ Install `nsfr` and `nudge`.
 Training script:
 ```
 python train_blenderl.py --env-name seaquest --joint-training --num-steps 128 --num-envs 5 --gamma 0.99
-python train_blenderl.py --env-name riverraid --joint-training --num-steps 16 --num-envs 1 --gamma 0.99
 ```
 - --joint-training: train neural and logic modules jointly
 - --num-steps: the number of steps for policy rollout
