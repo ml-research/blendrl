@@ -28,6 +28,7 @@ def make_env(env):
     return env
 
 
+# python train_blenderl.py --env-name riverraid --joint-training --num-steps 16 --num-envs 1 --gamma 0.99
 class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     """
     Vectorized NUDGE environment for River Raid.
