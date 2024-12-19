@@ -42,6 +42,7 @@ def make_env(env):
     return env
 
 
+# python train_blenderl.py --env-name freeway --joint-training --num-steps 16 --num-envs 1 --gamma 0.99
 class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     name = "freeway"
     pred2action = {
