@@ -4,7 +4,8 @@ from blendrl.env_vectorized import VectorizedNudgeBaseEnv
 from ocatari.core import OCAtari
 import numpy as np
 
-# import torch as thfrom ocatari.ram.freeway import MAX_ESSENTIAL_OBJECTS
+import torch as th
+from ocatari.ram.freeway import MAX_NB_OBJECTS
 import gymnasium as gym
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
@@ -20,7 +21,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
     NoopResetEnv,
 )
 
-MAX_ESSENTIAL_OBJECTS = {
+MAX_NB_OBJECTS = {
     "Chicken": 1,  # chicken
     "Car": 10,  # up to 10 cars can be present
 }
@@ -77,16 +78,16 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
 
         self.n_actions = 3
         self.n_raw_actions = 18
-        self.n_objects = len(MAX_ESSENTIAL_OBJECTS)
+        self.n_objects = len(MAX_NB_OBJECTS)
         self.n_features = 6
         self.seed = seed
 
         self.obj_offsets = {}
         offset = 0
-        for obj, max_count in MAX_ESSENTIAL_OBJECTS.items():
+        for obj, max_count in MAX_NB_OBJECTS.items():
             self.obj_offsets[obj] = offset
             offset += max_count
-        self.relevant_objects = set(MAX_ESSENTIAL_OBJECTS.keys())
+        self.relevant_objects = set(MAX_NB_OBJECTS.keys())
 
     def reset(self):
         logic_states = []
@@ -137,7 +138,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
 
     def extract_logic_state(self, input_state):
         state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
-        obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
+        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
 
         for obj in input_state:
             if obj.category not in self.relevant_objects:
