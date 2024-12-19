@@ -1,0 +1,27 @@
+Metadata-Version: 2.1
+Name: nsfr
+Version: 0.1.0
+Summary: Neuro Symbolic Forward Reasonner
+Home-page: tba
+Author: Hikaru Shindo
+Author-email: hikisan.gouv
+Requires-Dist: matplotlib
+Requires-Dist: numpy
+Requires-Dist: seaborn
+Requires-Dist: setuptools
+Requires-Dist: tqdm
+Requires-Dist: lark
+
+NSFR Framework
+==============
+
+
+Adapted for Reinforcement Learning
+
+
+For each environment, the following files are available:
+* **bk.txt**: to be left empty
+* **clauses.txt**: logic clauses of the form *head*:-*body*; with *head* being an action and body, several body predicates.
+* **const.txt**: where all the constant types are declared
+* **neural_preds.txt**: predicates that are evaluated on the inputs
+* **preds.txt**: predicates that correspond to the actions 

@@ -1,5 +1,5 @@
-neural_agent(X):-close_to_car(X,C).
-neural_agent(X):-car_approaching(C,X).
-logic_agent(X):-safe_zone_reached(X).
-logic_agent(X):-on_top_lane(X).
-logic_agent(X):-path_clear(X).
+neural_agent(X):-closeby(C,P).
+neural_agent(X):-same_row(C,P).
+logic_agent(X):-above_row(C,P).
+logic_agent(X):-top5car(C).
+logic_agent(X):-bottom5car(C).
