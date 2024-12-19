@@ -1,0 +1,6 @@
+up_river(X) :- on_river(P, R), same_level_river(P, R).
+right_river(X) :- left_of_river(P, R), same_level_river(P, R).
+left_river(X) :- right_of_river(P, R), same_level_river(P, R).
+up_river(X) :- on_bridge_player(P, B), on_bridge_river(B, R).
+right_river(X) :- on_bridge_player(P, B), on_bridge_river(B, R).
+left_river(X) :- on_bridge_player(P, B), on_bridge_river(B, R).
