@@ -4,7 +4,7 @@ import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
 from hackatari.core import HackAtari
 import torch as th
-from ocatari.ram.riverraid import MAX_ESSENTIAL_OBJECTS
+from ocatari.ram.riverraid import MAX_NB_OBJECTS
 import gymnasium as gym
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip
@@ -98,10 +98,10 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
         offset = 0
-        for obj, max_count in MAX_ESSENTIAL_OBJECTS.items():
+        for obj, max_count in MAX_NB_OBJECTS.items():
             self.obj_offsets[obj] = offset
             offset += max_count
-        self.relevant_objects = set(MAX_ESSENTIAL_OBJECTS.keys())
+        self.relevant_objects = set(MAX_NB_OBJECTS.keys())
 
     def reset(self):
         """
@@ -191,7 +191,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         """
         state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
 
-        obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
+        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
 
         for obj in raw_state:
             if obj.category not in self.relevant_objects:
