@@ -9,10 +9,10 @@ def reward_function(self) -> float:
 
     # BUG ↓ with multi envs, rewards collected repeatedlydd
     if self.org_reward == 1.0 and player.y != 45:
-        # e.g. eliminate a shark
+        # kill an enemy, e.g. a shark
         reward = 0.5
     elif self.org_reward == 1.0 and player.y == 45:
-        # when rescuesd 6 divers
+        # rescue 6 divers ('player.y == 45' means you're at the water surface)
         reward = 1.0
     else:
         reward = 0.0

@@ -7,15 +7,10 @@ def reward_function(self) -> float:
             player = obj
             break
 
-    # got reawrd and previous step was on the top platform -> reached the child
-    # if game_reward == 1.0 and player.prev_y == 4:
-    #    reward = 10.0
-    # x = 129
-    # if player.y == 4:
-        # reward = 0.2
-    # BUG ↓ with multi envs, rewards collected repeatedlydd
+    # player reaches top platform 
     if player.y == 4 and player.prev_y != 4:
         reward = 20.0
+    # player kills enemy
     elif self.org_reward == 1.0 and player.prev_y != 4:
         reward = 1.0
     else:
