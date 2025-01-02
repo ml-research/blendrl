@@ -74,7 +74,7 @@ class NudgeEnv(NudgeBaseEnv):
 
     def extract_logic_state(self, raw_state):
         n_features = 4
-        n_objects = 3
+        n_objects = 4
         logic_state = np.zeros((n_objects, n_features))
         for i, entity in enumerate(raw_state):
             if entity.category == "player":
@@ -83,7 +83,9 @@ class NudgeEnv(NudgeBaseEnv):
                 logic_state[i][1] = 1
             elif "enemy" in entity.category:
                 logic_state[i][2] = 1
-            logic_state[i][-4:] = np.array(entity.h_coords).flatten()
+            elif "ballshadow" in entity.category:
+                logic_state[i][3] = 1
+            logic_state[i][-5:] = np.array(entity.h_coords).flatten()
 
         return torch.tensor(logic_state)
 
