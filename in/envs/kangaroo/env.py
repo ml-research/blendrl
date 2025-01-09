@@ -94,6 +94,7 @@ class NudgeEnv(NudgeBaseEnv):
         self.env = OCAtari(
             env_name="ALE/Kangaroo-v5",
             mode="ram",
+            obs_mode="ori",
             render_mode=render_mode,
             render_oc_overlay=render_oc_overlay)
 

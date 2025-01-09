@@ -44,7 +44,7 @@ def _in_field(obj: th.Tensor) -> th.Tensor:
 
 
 # ---------------------------------------------------------------------------------
-# plattform logic
+# platform logic
 def _on_platform(obj1: th.Tensor, obj2: th.Tensor) -> th.Tensor:
     """True iff obj1 is 'on' obj2."""
     obj1_y = obj1[..., 2]
@@ -75,28 +75,60 @@ def on_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     # return  x_prob * y_prob * obj_prob * same_level_ladder(player, obj)
 
 
-def left_of_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is 'left of' the object."""
+def obj_below(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
+    """
+    Check if there is a platform directly below the player.
+    """
+    player_x, player_y = player[..., 1], player[..., 2]
+    platform_x, platform_y = obj[..., 1], obj[..., 2]
+    platform_prob = obj[:, 0]
+
+    # Platform below and aligned horizontally
+    is_below = (platform_y > player_y) & (platform_y - player_y < 60)
+    is_aligned = abs(player_x - platform_x) < 5
+
+    return bool_to_probs(is_below & is_aligned) * platform_prob
+
+
+def obj_on_platform_below(player: th.Tensor, fruit: th.Tensor, bell: th.Tensor, platform: th.Tensor) -> th.Tensor:
+    """
+    Check if a fruit or bell is on the platform below the player.
+    """
+    fruit_below = obj_below(player, fruit) & _on_platform(fruit, platform)
+    bell_below = obj_below(player, bell) & _on_platform(bell, platform)
+    return fruit_below | bell_below
+
+
+def safe_to_move(player: th.Tensor, monkey: th.Tensor, falling_coconut: th.Tensor, thrown_coconut: th.Tensor,
+                 platform: th.Tensor) -> th.Tensor:
+    """
+    Check if it is safe for the player to move down (no monkeys or coconuts on the platform below).
+    """
+    hazards_below = (
+            obj_below(player, monkey) |
+            obj_below(player, falling_coconut) |
+            obj_below(player, thrown_coconut)
+    )
+    hazards_on_platform = (
+            _on_platform(monkey, platform) |
+            _on_platform(falling_coconut, platform) |
+            _on_platform(thrown_coconut, platform)
+    )
+    return ~bool_to_probs(hazards_below | hazards_on_platform)
+
+
+def at_window_edge_right(player: th.Tensor, edge_tolerance: float = 5.0) -> th.Tensor:
+    window_width = 160.0
     player_x = player[..., 1]
-    obj_x = obj[..., 1]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(3 < obj_x - player_x) * obj_prob * same_level_ladder(player, obj)
+    at_right_edge = (player_x >= window_width - edge_tolerance)
+    return bool_to_probs(at_right_edge)
 
 
-def right_of_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is 'right of' the object."""
+def at_window_edge_left(player: th.Tensor, edge_tolerance: float = 5.0) -> th.Tensor:
+    window_width = 160.0
     player_x = player[..., 1]
-    obj_x = obj[..., 1]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(3 < player_x - obj_x) * obj_prob * same_level_ladder(player, obj)
-
-
-def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(abs(player_y - obj_y) < 30) * obj_prob
-
+    at_left_edge = (player_x <= edge_tolerance)
+    return bool_to_probs(at_left_edge)
 
 def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     obj1_y = player[..., 2] + 10
@@ -114,7 +146,7 @@ def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
 # ---------------------------------------------------------------------------------
 # fruit logic
 def close_by_fruit(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * _same_level(player, obj)
+    return _close_by(player, obj) * same_level(player, obj)
 
 
 def on_pl_fruit(fruit: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -124,7 +156,7 @@ def on_pl_fruit(fruit: th.Tensor, obj: th.Tensor) -> th.Tensor:
 # ---------------------------------------------------------------------------------
 # bell logic
 def same_level_bell(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _same_level(player, obj)
+    return same_level(player, obj)
 
 
 def on_pl_bell(bell: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -132,51 +164,39 @@ def on_pl_bell(bell: th.Tensor, obj: th.Tensor) -> th.Tensor:
 
 
 def close_by_bell(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * _same_level(player, obj)
+    return _close_by(player, obj) * same_level(player, obj)
 
 
 # ---------------------------------------------------------------------------------
 # monkey logic
 def close_by_monkey(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * _same_level(player, obj)
+    return _close_by(player, obj) * same_level(player, obj)
+
 
 # ---------------------------------------------------------------------------------
 # coconut logic
+def close_by_coconut_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
+    results = []
+    for obj in objects:
+        results.append(_close_by(player, obj) * same_level(player, obj))
+    return th.stack(results).any(dim=0)
+
+
 def close_by_coconut(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """
-        Check if the player is close to coconut (falling or thrown).
-        """
-    is_falling_close = close_by_fallingcoconut(player, obj)
-    is_thrown_close = close_by_throwncoconut(player, obj)
-    return is_falling_close | is_thrown_close  # Logical OR to combine both checks
-
-
-def close_by_throwncoconut(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj, direction="horizontal")
-
-
-def close_by_fallingcoconut(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj, direction="vertical")
-
+    return _close_by(player, obj) * same_level(player, obj)
 
 # ---------------------------------------------------------------------------------
 # general methods
-def _close_by(player: th.Tensor, obj: th.Tensor, direction: str = None) -> th.Tensor:
-    th = 32  # Distance threshold
+def _close_by(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
+    th = 2  # Distance threshold
     player_x, player_y = player[:, 1], player[:, 2]
     obj_x, obj_y = obj[:, 1], obj[:, 2]
     obj_prob = obj[:, 0]
-
-    if direction == "horizontal":
-        dist = (player_x - obj_x).abs()  # Horizontal distance
-    elif direction == "vertical":
-        dist = (player_y - obj_y).abs()  # Vertical distance
-    else:
-        dist = ((player_x - obj_x).pow(2) + (player_y - obj_y).pow(2)).sqrt()  # General distance
-
+    dist = ((player_x - obj_x).pow(2) + (player_y - obj_y).pow(2)).sqrt()  # General distance
     return bool_to_probs(dist < th) * obj_prob * _in_field(obj)
 
-def _same_level(obj1: th.Tensor, obj2: th.Tensor) -> th.Tensor:
+
+def same_level(obj1: th.Tensor, obj2: th.Tensor) -> th.Tensor:
     obj1_y = obj1[..., 2]
     obj2_y = obj2[..., 2]
 
@@ -187,6 +207,32 @@ def _same_level(obj1: th.Tensor, obj2: th.Tensor) -> th.Tensor:
 
     is_same_level = th.logical_or(is_3rd_level, th.logical_or(is_2nd_level, is_1st_level))
     return bool_to_probs(is_same_level)
+
+
+def is_lower(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 5) -> th.Tensor:
+    """
+    Check if one or more objects are horizontally on the same level or slightly lower than the player.
+    """
+    player_y = player[..., 2]
+    results = []
+    for obj in objects:
+        obj_y, obj_prob = obj[..., 2], obj[:, 0]
+        is_same_or_lower = (obj_y <= player_y) & (player_y - obj_y <= vertical_tolerance)
+        results.append(bool_to_probs(is_same_or_lower) * obj_prob)
+    return th.stack(results).any(dim=0)
+
+
+def same_or_higher_level(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 5) -> th.Tensor:
+    """
+    Check if one or more objects are horizontally on the same level or slightly higher than the player.
+    """
+    player_y = player[..., 2]
+    results = []
+    for obj in objects:
+        obj_y, obj_prob = obj[..., 2], obj[:, 0]
+        is_same_or_higher = (obj_y >= player_y) & (obj_y - player_y <= vertical_tolerance)
+        results.append(bool_to_probs(is_same_or_higher) * obj_prob)
+    return th.stack(results).any(dim=0)
 
 
 def _not_close_by(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -217,6 +263,33 @@ def on_right(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     obj_prob = obj[:, 0]
     return bool_to_probs(obj_x > player_x) * obj_prob
 
+
+def on_right_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
+    """
+    Check if one or more objects are to the right of the player.
+    """
+    player_x = player[..., 1]
+    results = []
+    for obj in objects:
+        obj_x, obj_prob = obj[..., 1], obj[:, 0]
+        is_on_right = obj_x > player_x
+        results.append(bool_to_probs(is_on_right) * obj_prob)
+    return th.stack(results).any(dim=0)
+
+
+def on_left_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
+    """
+    Check if one or more objects are to the left of the player.
+    """
+    player_x = player[..., 1]
+    results = []
+    for obj in objects:
+        obj_x, obj_prob = obj[..., 1], obj[:, 0]
+        is_on_left = obj_x < player_x
+        results.append(bool_to_probs(is_on_left) * obj_prob)
+    return th.stack(results).any(dim=0)
+
+
 def above(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     player_y = player[..., 2]
     obj_y = obj[..., 2]
@@ -224,11 +297,20 @@ def above(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     return bool_to_probs(obj_y > player_y) * obj_prob
 
 
+def above_combi(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 60) -> th.Tensor:
+    """
+    Check if one or more objects are above the player.
+    """
+    player_y = player[..., 2]
+    results = []
+    for obj in objects:
+        obj_y, obj_prob = obj[..., 2], obj[:, 0]
+        is_above = obj_y > player_y
+        results.append(bool_to_probs(is_above) * obj_prob)
+    return th.stack(results).any(dim=0)
+
+
 def not_close_by_missile(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _not_close_by(player, obj)
-
-
-def not_close_by_enemy(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     return _not_close_by(player, obj)
 
 
@@ -248,66 +330,3 @@ def true_predicate(agent: th.Tensor) -> th.Tensor:
 
 def false_predicate(agent: th.Tensor) -> th.Tensor:
     return bool_to_probs(th.tensor([False]))
-
-
-# ---------------------------------------------------------------------------------
-def same_depth_diver(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(abs(player_y - obj_y) < 6) * obj_prob
-
-
-def same_depth_missile(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(abs(player_y - obj_y) < 6) * obj_prob
-
-
-def deeper_than_enemy(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is (significantly) 'deeper than' the object."""
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(player_y > obj_y + 4) * obj_prob
-
-
-def deeper_than_diver(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is (significantly) 'deeper than' the object."""
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(player_y > obj_y + 4) * obj_prob
-
-
-def higher_than_enemy(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is (significantly) 'higher than' the object."""
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(player_y < obj_y - 4) * obj_prob
-
-
-def higher_than_diver(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is (significantly) 'higher than' the object."""
-    player_y = player[..., 2]
-    obj_y = obj[..., 2]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(player_y < obj_y - 4) * obj_prob
-
-
-def left_of_diver(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is 'left of' the object."""
-    player_x = player[..., 1]
-    obj_x = obj[..., 1]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(player_x < obj_x) * obj_prob
-
-
-def right_of_diver(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """True iff the player is 'right of' the object."""
-    player_x = player[..., 1]
-    obj_x = obj[..., 1]
-    obj_prob = obj[:, 0]
-    return bool_to_probs(player_x > obj_x) * obj_prob
