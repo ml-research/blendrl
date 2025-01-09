@@ -197,5 +197,3 @@ $RECYCLE.BIN/
 # Our project specific stuff
 __pycache__
 /models
-/out_nudge
-/out_blendrl
