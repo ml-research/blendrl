@@ -1,11 +1,11 @@
 from typing import Sequence
 import torch
 from nudge.env import NudgeBaseEnv
-from hackatari.core import HackAtari
 import numpy as np
 import torch as th
 from ocatari.ram.donkeykong import MAX_ESSENTIAL_OBJECTS
 import gymnasium as gym
+from ocatari.core import OCAtari
 
 
     
@@ -16,6 +16,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
     MaxAndSkipEnv,
     NoopResetEnv,
 )
+
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
@@ -44,6 +45,9 @@ class NudgeEnv(NudgeBaseEnv):
         seed (int): Seed for the environment.
     """
     name = "donkeykong"
+    # MAX_ESSENTIAL_OBJECTS = {
+    #     'Player': 1, "DonkeyKong": 1, "Girlfriend": 1, "Hammer": 1, "Barrel": 6, "Ladder": 10
+    # }
     pred2action = {
         'noop': 0,
         'fire': 1,
@@ -51,6 +55,10 @@ class NudgeEnv(NudgeBaseEnv):
         'right': 3,
         'left': 4,
         'down': 5,
+        'up_right': 6,
+        'up_left': 7,
+        'fire_right': 11,
+        'fire_left': 12
     }
     pred_names: Sequence
 
@@ -66,17 +74,18 @@ class NudgeEnv(NudgeBaseEnv):
             seed (int): Seed for the environment.
         """
         super().__init__(mode)
-        self.env = HackAtari(env_name="ALE/DonkeyKong-v5", mode="ram", obs_mode="ori",\
-            modifs=[("no_barrel"), ("change_level0")],\
-            rewardfunc_path="in/envs/donkeykong/blenderl_reward.py",\
-            render_mode=render_mode, render_oc_overlay=render_oc_overlay)
-        
-        
+        self.env = OCAtari(
+            env_name="ALE/DonkeyKong-v5",
+            mode="ram",
+            obs_mode="ori",
+            render_mode=render_mode,
+            render_oc_overlay=render_oc_overlay)
+
         # apply wrapper to _env
         self.env._env = make_env(self.env._env)
-        self.n_actions = 6
+        self.n_actions = len(self.pred2action)
         self.n_raw_actions = 18
-        self.n_objects = 49
+        self.n_objects = 20
         self.n_features = 4  # visible, x-pos, y-pos, right-facing
         self.seed = seed
 
@@ -98,7 +107,8 @@ class NudgeEnv(NudgeBaseEnv):
         """
         raw_state, _ = self.env.reset(seed=self.seed)
         state = self.env.objects
-        logic_state, neural_state =  self.extract_logic_state(state), self.extract_neural_state(raw_state)
+        self.ocatari_state = state
+        logic_state, neural_state = self.extract_logic_state(state), self.extract_neural_state(raw_state)
         logic_state = logic_state.unsqueeze(0)
         return logic_state, neural_state
 
@@ -118,8 +128,8 @@ class NudgeEnv(NudgeBaseEnv):
             infos (dict): Additional information.
         """
         raw_state, reward, truncations, done, infos = self.env.step(action)
-        # save state in the original enviromnt to visualization
         state = self.env.objects
+        self.ocatari_state = state
         logic_state, neural_state = self.convert_state(state, raw_state)
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
@@ -159,7 +169,7 @@ class NudgeEnv(NudgeBaseEnv):
         Returns:
             torch.Tensor: Neural state.
         """
-        return torch.Tensor(raw_input_state).unsqueeze(0)#.float()
+        return torch.Tensor(raw_input_state).unsqueeze(0)  # .float()
 
     def close(self):
         """

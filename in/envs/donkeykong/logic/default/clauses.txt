@@ -1,3 +1,12 @@
-up_ladder(X):-on_ladder(P,L),same_level_ladder(P,L).
-right_ladder(X):-left_of_ladder(P,L),same_level_ladder(P,L).
-left_ladder(X):-right_of_ladder(P,L),same_level_ladder(P,L).
+right(X):-on_right(P,L),same_level_ladder(P,L).
+left(X):-on_left(P,L),same_level_ladder(P,L).
+up(X):-on_ladder(P,L),same_level_ladder(P,L),safe_to_climb(D,B,PL).
+up_left(X):-close_by_barrel(P,B),on_left(P,B).
+up_right(X):-close_by_barrel(P,B),on_right(P,B).
+up(X):-close_by_hammer(P,H),above(P,H),has_no_hammer(P,H).
+right(X):-close_by_hammer(P,H),on_right(P,H),has_no_hammer(P,H).
+left(X):-close_by_hammer(P,H),on_left(P,H),has_no_hammer(P,H).
+fire_left(X):-close_by_barrel(P,B),on_left(P,B),has_hammer(P,H).
+fire_right(X):-close_by_barrel(P,B),on_right(P,B),has_hammer(P,H).
+right(X):-on_right(P,G),same_level(P,G),no_donkeykong_between(P,G,D).
+left(X):-on_left(P,G),same_level(P,G),no_donkeykong_between(P,G,D).
