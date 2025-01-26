@@ -4,8 +4,12 @@ from nudge.env import NudgeBaseEnv
 from ocatari.core import OCAtari
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
+import gymnasium
 import gymnasium as gym
-import numpy as np
+from stable_baselines3.common.env_util import make_atari_env
+from stable_baselines3.common.vec_env import VecFrameStack
+
+from utils import load_cleanrl_envs
 
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip

@@ -1,3 +1,4 @@
+import time
 from typing import Sequence
 import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
@@ -221,26 +222,25 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
 
     def extract_logic_state(self, raw_state):
         """
-        Extracts the logic state from the input state.
-        Args:
-            raw_state (list): List of objects in the environment.
-        Returns:
-            torch.Tensor: Logic state.
+            Extracts the logic state from the input state.
+                Args:
+                    raw_state (list): List of objects in the environment.
+                Returns:
+                    torch.Tensor: Logic state.
 
-        Comment:
-            in ocatari/ram/kangaroo.py :
-                MAX_ESSENTIAL_OBJECTS = {
-                    'Player': 1,
-                    'Child': 1,
-                    'Fruit': 3,
-                    'Bell': 1,
-                    'Platform': 20,
-                    'Ladder': 6,
-                    'Monkey': 4,
-                    'FallingCoconut': 1,
-                    'ThrownCoconut': 3,
-                    'Life': 8,
-                    'Time': 1,}
+                Comment:
+                    in ocatari/ram/kangaroo.py :
+                    MAX_ESSENTIAL_OBJECTS = {
+                        'Player': 1,
+                        'Child': 1,
+                        'Monkey': 4,
+                        'FallingCoconut': 1,
+                        'ThrownCoconut': 3,
+                        'Fruit': 3,
+                        'Bell': 1,
+                        'Ladder': 6,
+                        'Platform': 20,
+        }
         """
         state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
 
