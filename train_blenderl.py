@@ -137,7 +137,7 @@ def main():
     args.minibatch_size = int(args.batch_size // args.num_minibatches)
     args.num_iterations = args.total_timesteps // args.batch_size
     model_description = "{}_blender_{}".format(args.blend_function, args.blender_mode)
-    learning_description = f"lr_{args.learning_rate}_llr_{args.logic_learning_rate}_blr_{args.blender_learning_rate}_gamma_{args.gamma}_bentcoef_{args.blend_ent_coef}_numenvs_{args.num_envs}_steps_{args.num_steps}_pretrained_{args.pretrained}_joint_{args.joint_training}"
+    learning_description = f"lr_{args.learning_rate}_llr_{args.logic_learning_rate}_blr_{args.blender_learning_rate}_gamma_{args.gamma}_bentcoef_{args.blend_ent_coef}_numenvs_{args.num_envs}_steps_{args.num_steps}_"
     run_name = f"{args.env_name}_{model_description}_{learning_description}_{args.seed}"
     if args.track:
         wandb.init(
@@ -389,11 +389,12 @@ def main():
 
                 entropy_loss = entropy.mean()
                 blend_entropy_loss = blend_entropy.mean()
+                # __import__('ipdb').set_trace()
                 joint_entropy_loss = - args.ent_coef * entropy_loss - args.blend_ent_coef * blend_entropy_loss
                 loss = pg_loss + joint_entropy_loss + v_loss * args.vf_coef
 
                 optimizer.zero_grad()
-                loss.backward()
+                loss.backward(retain_graph=True)
                 nn.utils.clip_grad_norm_(agent.parameters(), args.max_grad_norm)
                 optimizer.step()
 

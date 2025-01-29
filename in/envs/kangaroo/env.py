@@ -3,6 +3,7 @@ import torch
 from nudge.env import NudgeBaseEnv
 from ocatari.core import OCAtari
 from hackatari.core import HackAtari
+from blendrl.env_utils import make_env
 import numpy as np
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
@@ -23,34 +24,34 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 )
 
 
-def make_env(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
-    return env
+# def make_env(env):
+#     env = gym.wrappers.RecordEpisodeStatistics(env)
+#     env = gym.wrappers.AutoResetWrapper(env)
+#     env = NoopResetEnv(env, noop_max=30)
+#     env = MaxAndSkipEnv(env, skip=4)
+#     env = EpisodicLifeEnv(env)
+#     if "FIRE" in env.unwrapped.get_action_meanings():
+#         env = FireResetEnv(env)
+#     env = ClipRewardEnv(env)
+#     env = gym.wrappers.ResizeObservation(env, (84, 84))
+#     env = gym.wrappers.GrayScaleObservation(env)
+#     env = gym.wrappers.FrameStack(env, 4)
+#     return env
 
 
-def make_env_ori(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    # env = gym.wrappers.ResizeObservation(env, (84, 84))
-    # env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
-    return env
+# def make_env_ori(env):
+#     env = gym.wrappers.RecordEpisodeStatistics(env)
+#     env = gym.wrappers.AutoResetWrapper(env)
+#     env = NoopResetEnv(env, noop_max=30)
+#     env = MaxAndSkipEnv(env, skip=4)
+#     env = EpisodicLifeEnv(env)
+#     if "FIRE" in env.unwrapped.get_action_meanings():
+#         env = FireResetEnv(env)
+#     env = ClipRewardEnv(env)
+#     # env = gym.wrappers.ResizeObservation(env, (84, 84))
+#     # env = gym.wrappers.GrayScaleObservation(env)
+#     env = gym.wrappers.FrameStack(env, 4)
+#     return env
 
 
 class NudgeEnv(NudgeBaseEnv):
