@@ -6,6 +6,7 @@ import torch as th
 from ocatari.ram.pong import MAX_NB_OBJECTS
 import gymnasium as gym
 import time
+import numpy as np
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip
     ClipRewardEnv,
@@ -46,21 +47,18 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     name = "pong"
     pred2action = {
         'noop': 0,
-        'fire': 1,
         'right': 2,
-        'left': 3,
-        'rightfire': 4,
-        'leftfire': 5
+        'left': 3
     }
     pred_names: Sequence
 
     def __init__(
-        self,
-        mode: str,
-        n_envs: int,
-        render_mode="rgb_array",
-        render_oc_overlay=False,
-        seed=None,
+            self,
+            mode: str,
+            n_envs: int,
+            render_mode="rgb_array",
+            render_oc_overlay=False,
+            seed=None,
     ):
         """
         Constructor for the VectorizedNudgeEnv class.
@@ -107,24 +105,22 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     def reset(self):
         """
         Reset the environment.
-
         Returns:
-            logic_states (torch.Tensor): Logic states.
-            neural_states (torch.Tensor): Neural states.
+            Tuple: Logic states and neural states for all environments.
         """
         logic_states = []
         neural_states = []
         seed_i = self.seed
         print("Env is being reset...")
         for env in self.envs:
-            obs, _ = env.reset(seed=seed_i)
-            # lazy frame to tensor
+            obs, state = env.reset(seed=seed_i)
             obs = torch.tensor(obs).float()
             state = env.objects
-            raw_state = obs  # self.env.dqn_obs
-            logic_state, neural_state = self.extract_logic_state(
-                state
-            ), self.extract_neural_state(raw_state)
+            raw_state = obs
+            # logic_state, neural_state = self.extract_logic_state(
+            #     state
+            # ), self.extract_neural_state(raw_state)
+            logic_state, neural_state = self.convert_state(state, raw_state)
             logic_states.append(logic_state)
             neural_states.append(neural_state)
             seed_i += 1
@@ -134,20 +130,9 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     def step(self, actions, is_mapped=False):
         """
         Perform a step in the environment.
-
-        Args:
-            actions (torch.Tensor): Actions to be performed in the environment.
-            is_mapped (bool): Whether the actions are already mapped.
-        Returns:
-            Tuple: Tuple containing:
-                - torch.Tensor: Observations.
-                - list: Rewards.
-                - list: Truncations.
-                - list: Dones.
-                - list: Infos.
         """
         assert (
-            len(actions) == self.n_envs
+                len(actions) == self.n_envs
         ), "Invalid number of actions: n_actions is {} and n_envs is {}".format(
             len(actions), self.n_envs
         )
@@ -162,28 +147,41 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         start = time.time()
         for i, env in enumerate(self.envs):
             action = actions[i]
-            # make a step in the env
-            obs, reward, truncation, done, info = env.step(action)
+            # Step in the environment
+            obs, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
+
+            # Handle terminal states and episodic statistics
+            if done:
+                print(f"Environment {i} is done. Resetting...")
+
+                # Extract episodic statistics before resetting
+                if 'final_info' in info and 'episode' in info['final_info']:
+                    episode_stats = info['final_info']['episode']
+                    episodic_return = float(episode_stats['r'][0])  # Total reward
+                    episodic_length = int(episode_stats['l'][0])  # Episode length
+                    print(f"Env {i}: episodic_return={episodic_return}, episodic_length={episodic_length}")
+                else:
+                    episodic_return = 0.0
+                    episodic_length = 0
+                    print(f"Env {i}: No episodic stats found in final_info.")
+
+                # Reset environment
+                obs, _ = env.reset()
+
             raw_state = torch.tensor(obs).float()
-            # get logic and neural state
             state = env.objects
             logic_state, neural_state = self.convert_state(state, raw_state)
             logic_states.append(logic_state)
             neural_states.append(neural_state)
+            # Append results to lists
             observations.append(obs)
             rewards.append(reward)
-            truncations.append(truncation)
+            truncations.append(truncated)
             dones.append(done)
             infos.append(info)
         end = time.time()
         diff = end - start
-        # print("Time taken for step: ", diff)
-
-        end = time.time()
-        diff = end - start
-        # print("Time taken for step: ", diff)
-
-        # observations = torch.stack(observations)
         return (
             (torch.stack(logic_states), torch.stack(neural_states)),
             rewards,
@@ -200,20 +198,17 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         Returns:
             torch.Tensor: Logic state.
         """
-        state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
+        logic_state = np.zeros((self.n_objects, self.n_features))
 
-        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
-
-        for obj in raw_state:
-            if obj.category not in self.relevant_objects:
-                continue
-            idx = self.obj_offsets[obj.category] + obj_count[obj.category]
-            orientation = (
-                obj.orientation.value if obj.orientation is not None else 0
-            )
-            state[idx] = th.tensor([1, *obj.center, orientation])
-            obj_count[obj.category] += 1
-        return state
+        for idx, obj in enumerate(raw_state):
+            if obj.category == "player":
+                logic_state[idx][0] = 1
+            elif obj.category == "ball":
+                logic_state[idx][1] = 1
+            elif "enemy" in obj.category:
+                logic_state[idx][2] = 1
+            logic_state[idx][-4:] = np.array(obj.h_coords).flatten()
+        return torch.tensor(logic_state, dtype=torch.float32)
 
     def extract_neural_state(self, raw_input_state):
         """

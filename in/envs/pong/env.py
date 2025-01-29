@@ -81,7 +81,6 @@ class NudgeEnv(NudgeBaseEnv):
     def reset(self):
         raw_state, _ = self.env.reset(seed=self.seed)
         state = self.env.objects
-        self.ocatari_state = state
         logic_state, neural_state = self.extract_logic_state(state), self.extract_neural_state(raw_state)
         logic_state = logic_state.unsqueeze(0)
         return logic_state, neural_state
@@ -89,43 +88,42 @@ class NudgeEnv(NudgeBaseEnv):
     def step(self, action, is_mapped: bool = False):
         raw_state, reward, truncations, done, infos = self.env.step(action)
         state = self.env.objects
-        self.ocatari_state = state
         logic_state, neural_state = self.convert_state(state, raw_state)
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
 
     def extract_logic_state(self, raw_state):
-        # n_features = 4
-        # n_objects = 3
-        # logic_state = np.zeros((n_objects, n_features))
-        # for i, entity in enumerate(raw_state):
-        #     if entity.category == "player":
-        #         logic_state[i][0] = 1
-        #     elif entity.category == 'ball':
-        #         logic_state[i][1] = 1
-        #     elif "enemy" in entity.category:
-        #         logic_state[i][2] = 1
-        #     logic_state[i][-4:] = np.array(entity.h_coords).flatten()
-        #     return th.tensor(logic_state)
+        n_features = 4
+        n_objects = 3
+        logic_state = np.zeros((n_objects, n_features))
+        for i, entity in enumerate(raw_state):
+            if entity.category == "player":
+                logic_state[i][0] = 1
+            elif entity.category == 'ball':
+                logic_state[i][1] = 1
+            elif "enemy" in entity.category:
+                logic_state[i][2] = 1
+            logic_state[i][-4:] = np.array(entity.h_coords).flatten()
+            return th.tensor(logic_state)
 
-        state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
-        # seve bboxes for exlanation rendering
-        self.bboxes = th.zeros((self.n_objects, 4), dtype=th.int32)
-
-        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
-
-        for obj in raw_state:
-            if obj.category not in self.relevant_objects:
-                continue
-            idx = self.obj_offsets[obj.category] + obj_count[obj.category]
-
-            orientation = (
-                obj.orientation.value if obj.orientation is not None else 0
-            )
-            state[idx] = th.tensor([1, *obj.center, orientation])
-            obj_count[obj.category] += 1
-            self.bboxes[idx] = th.tensor(obj.xywh)
-        return state
+        # state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
+        # # seve bboxes for exlanation rendering
+        # self.bboxes = th.zeros((self.n_objects, 4), dtype=th.int32)
+        #
+        # obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
+        #
+        # for obj in raw_state:
+        #     if obj.category not in self.relevant_objects:
+        #         continue
+        #     idx = self.obj_offsets[obj.category] + obj_count[obj.category]
+        #
+        #     orientation = (
+        #         obj.orientation.value if obj.orientation is not None else 0
+        #     )
+        #     state[idx] = th.tensor([1, *obj.center, orientation])
+        #     obj_count[obj.category] += 1
+        #     self.bboxes[idx] = th.tensor(obj.xywh)
+        # return state
 
 
 
