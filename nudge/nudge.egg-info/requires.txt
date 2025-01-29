@@ -1,0 +1,10 @@
+tyro
+gymnasium
+hackatari
+torch-geometric
+networkx
+captum
+rtpt
+wandb
+ocatari
+stable_baselines3==2.3.2

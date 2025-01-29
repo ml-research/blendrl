@@ -1,0 +1,1 @@
+python train_blenderl.py --env-name freeway --joint-training --num-steps 16 --num-envs 1 --gamma 0.9

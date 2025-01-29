@@ -1,0 +1,11 @@
+setup.py
+agents/__init__.py
+agents/logic_agent.py
+agents/neural_agent.py
+agents/random_agent.py
+agents/stable_neural_agent.py
+nudge.egg-info/PKG-INFO
+nudge.egg-info/SOURCES.txt
+nudge.egg-info/dependency_links.txt
+nudge.egg-info/requires.txt
+nudge.egg-info/top_level.txt
