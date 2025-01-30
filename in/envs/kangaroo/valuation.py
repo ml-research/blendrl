@@ -30,7 +30,7 @@ def nothing_around(objs: th.Tensor) -> th.Tensor:
     players = objs[:, 0].unsqueeze(1).expand(-1, target_objs.size(1), -1)
 
     # batch_size * num_target_objs
-    probs = th.stack([_close_by(players[:, i, :], target_objs[:, i, :]) for i in range(target_objs.size(1))], dim=1)
+    probs = th.stack([_close_by(players[:, i, :], target_objs[:, i, :], th=3) for i in range(target_objs.size(1))], dim=1)
 
     max_closeby_prob, _ = probs.max(dim=1)
     result = (1.0 - max_closeby_prob).float()
@@ -130,6 +130,7 @@ def at_window_edge_left(player: th.Tensor, edge_tolerance: float = 5.0) -> th.Te
     at_left_edge = (player_x <= edge_tolerance)
     return bool_to_probs(at_left_edge)
 
+
 def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     obj1_y = player[..., 2] + 10
     obj2_y = obj[..., 2]
@@ -146,7 +147,7 @@ def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
 # ---------------------------------------------------------------------------------
 # fruit logic
 def close_by_fruit(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * same_level(player, obj)
+    return _close_by(player, obj, th=5) * same_level(player, obj)
 
 
 def on_pl_fruit(fruit: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -164,13 +165,13 @@ def on_pl_bell(bell: th.Tensor, obj: th.Tensor) -> th.Tensor:
 
 
 def close_by_bell(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * same_level(player, obj)
+    return _close_by(player, obj, th=5) * same_level(player, obj)
 
 
 # ---------------------------------------------------------------------------------
 # monkey logic
 def close_by_monkey(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * same_level(player, obj)
+    return _close_by(player, obj, th=5) * same_level(player, obj)
 
 
 # ---------------------------------------------------------------------------------
@@ -178,17 +179,17 @@ def close_by_monkey(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
 def close_by_coconut_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
     results = []
     for obj in objects:
-        results.append(_close_by(player, obj) * same_level(player, obj))
+        results.append(_close_by(player, obj, th=3) * same_level(player, obj))
     return th.stack(results).any(dim=0)
 
 
 def close_by_coconut(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _close_by(player, obj) * same_level(player, obj)
+    return _close_by(player, obj, th=3) * same_level(player, obj)
+
 
 # ---------------------------------------------------------------------------------
 # general methods
-def _close_by(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    th = 2  # Distance threshold
+def _close_by(player: th.Tensor, obj: th.Tensor, th: int=3) -> th.Tensor:
     player_x, player_y = player[:, 1], player[:, 2]
     obj_x, obj_y = obj[:, 1], obj[:, 2]
     obj_prob = obj[:, 0]
@@ -209,20 +210,19 @@ def same_level(obj1: th.Tensor, obj2: th.Tensor) -> th.Tensor:
     return bool_to_probs(is_same_level)
 
 
-def is_lower(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 5) -> th.Tensor:
+def is_lower(player: th.Tensor, obj: th.Tensor, vertical_tolerance: float = 3) -> th.Tensor:
     """
-    Check if one or more objects are horizontally on the same level or slightly lower than the player.
+    Check if one or more objects are horizontally lower than the player.
     """
     player_y = player[..., 2]
     results = []
-    for obj in objects:
-        obj_y, obj_prob = obj[..., 2], obj[:, 0]
-        is_same_or_lower = (obj_y <= player_y) & (player_y - obj_y <= vertical_tolerance)
-        results.append(bool_to_probs(is_same_or_lower) * obj_prob)
+    obj_y, obj_prob = obj[..., 2], obj[:, 0]
+    is_same_or_lower = (obj_y <= player_y) & (player_y - obj_y <= vertical_tolerance)
+    results.append(bool_to_probs(is_same_or_lower) * obj_prob)
     return th.stack(results).any(dim=0)
 
 
-def same_or_higher_level(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 5) -> th.Tensor:
+def same_or_higher_level(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 10) -> th.Tensor:
     """
     Check if one or more objects are horizontally on the same level or slightly higher than the player.
     """

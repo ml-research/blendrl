@@ -29,7 +29,7 @@ above_combi:3:oplayer,ofalling_coconut,othrown_coconut
 obj_below:2:oplayer,oplattform
 obj_on_platform_below:4:oplayer,ofruit,obell,oplattform
 safe_to_move:5:oplayer,omonkey,ofalling_coconut,othrown_coconut,oplattform
-same_level_ladder:2:oplayer,ochild
+same_level:2:oplayer,ochild
 on_right:2:oplayer,ochild
 on_left:2:oplayer,ochild
 same_or_higher_level:3:oplayer,ofalling_coconut,othrown_coconut
