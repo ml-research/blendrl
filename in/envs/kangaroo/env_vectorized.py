@@ -103,8 +103,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
                 mode="ram",
                 obs_mode="ori",
                 render_mode=render_mode,
-                render_oc_overlay=render_oc_overlay,
-            )
+                render_oc_overlay=render_oc_overlay)
             for _ in range(n_envs)
         ]
         # apply wrapper to _env

@@ -73,11 +73,11 @@ class NudgeEnv(NudgeBaseEnv):
         "down": 5,
         "up_right": 6,
         "up_left": 7,
-        "fire_up": 10,
-        "fire_left": 12,
-        "fire_right": 11,
-        "fire_up_right": 14,
-        "fire_up_left": 15
+        "up_fire": 10,
+        "left_fire": 12,
+        "right_fire": 11,
+        "up_right_fire": 14,
+        "up_left_fire": 15
     }
     pred_names: Sequence
 
@@ -151,7 +151,6 @@ class NudgeEnv(NudgeBaseEnv):
         """
         raw_state, reward, truncations, done, infos = self.env.step(action)
         state = self.env.objects
-        self.ocatari_state = state
         logic_state, neural_state = self.convert_state(state, raw_state)
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
