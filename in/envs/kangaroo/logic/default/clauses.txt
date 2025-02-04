@@ -1,6 +1,6 @@
-left_to_ladder(X):-on_left(P,L),same_level_ladder(P,L).
 right_to_ladder(X):-on_right(P,L),same_level_ladder(P,L).
 up_ladder(X):-is_player_on_ladder(P,L),same_level_ladder(P,L).
+left_to_ladder(X):-on_left(P,L),same_level_ladder(P,L).
 up_to_avoid_coconut(X):-close_by_coconut_combi(P,FC,TC),is_lower_combi(P,FC,TC).
 right_to_avoid_coconut(X):-close_by_coconut_combi(P,FC,TC),above_combi(P,FC,TC),on_left_combi(P,FC,TC),on_right(P,L).
 left_to_avoid_coconut(X):-close_by_coconut_combi(P,FC,TC),above_combi(P,FC,TC),on_right_combi(P,FC,TC),on_left(P,L).

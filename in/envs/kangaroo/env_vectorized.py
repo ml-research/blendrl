@@ -6,6 +6,7 @@ import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
 import gymnasium as gym
 from ocatari.core import OCAtari
+from rtpt import RTPT
 
 import time
 
@@ -54,7 +55,12 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         "left": 4,
         "down": 5,
         "up_right": 6,
-        "up_left": 7
+        "up_left": 7,
+        "up_fire": 10,
+        "left_fire": 12,
+        "right_fire": 11,
+        "up_right_fire": 14,
+        "up_left_fire": 15
     }
     pred_names: Sequence
 
