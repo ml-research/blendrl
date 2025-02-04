@@ -1,2 +1,2 @@
-neural_agent(X):-is_lower(P,TC).
-logic_agent(X):-is_lower(P,TC).
+neural_agent(X):-on_right(P,L).
+logic_agent(X):-on_right(P,L).

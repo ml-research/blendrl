@@ -84,19 +84,6 @@ def is_player_on_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     return final_prob
 
 
-def obj_below(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    """
-    Check if there is a platform directly below the player.
-    """
-    player_x, player_y = player[..., 1], player[..., 2]
-    platform_x, platform_y = obj[..., 1], obj[..., 2]
-    platform_prob = obj[:, 0]
-    # Platform below and aligned horizontally
-    is_below = (platform_y > player_y) & (platform_y - player_y < 60)
-    is_aligned = abs(player_x - platform_x) < 5
-    return bool_to_probs(is_below & is_aligned) * platform_prob
-
-
 def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     obj1_y = player[..., 2] + 10
     obj2_y = obj[..., 2]
@@ -135,8 +122,11 @@ def close_by_monkey(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
 def close_by_coconut_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
     results = []
     for obj in objects:
-        results.append(_close_by(player, obj, temperature=6.0))
-    return th.stack(results).any(dim=0)
+        results.append(_close_by(player, obj))
+    # Stack the results to combine the probabilities across different objects.
+    stacked = th.stack(results)  # Shape: [number_of_objects, ...]
+    # Compute the union probability assuming independence:
+    return 1 - th.prod(1 - stacked, dim=0)
 
 
 def close_by_coconut(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -208,26 +198,45 @@ def is_lower(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     return sigmoid_smoothing(obj_y < player_y, temperature=6.0)
 
 
-def is_higher(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
+def is_lower_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
     """
-    Check if one or more objects are horizontally lower than the player.
+    Check if one or more objects are horizontally lower than the player using union probability.
     """
-    player_y = player[:, 2]
-    obj_y = obj[:, 2]
-    return sigmoid_smoothing(obj_y > player_y, temperature=6.0)
+    results = []
+    # Compute individual probabilities using the is_lower function.
+    for obj in objects:
+        results.append(is_lower(player, obj))
+    # Stack the individual probability tensors.
+    stacked = th.stack(results)  # Shape: [number_of_objects, ...]
+    # Compute the union probability assuming independence:
+    # P(at least one) = 1 - (1 - p1) * (1 - p2) * ... * (1 - p_n)
+    combined_prob = 1 - th.prod(1 - stacked, dim=0)
+    return combined_prob
 
 
-def same_or_higher_level(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: float = 10) -> th.Tensor:
+def too_high_to_jump(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     """
     Check if one or more objects are horizontally on the same level or slightly higher than the player.
     """
     player_y = player[..., 2]
+    obj_y = obj[..., 2]
+    is_high = obj_y >= player_y
+    return sigmoid_smoothing(is_high, temperature=6.0) * same_level(player, obj)
+
+
+def too_high_to_jump_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
+    """
+    Check if one or more objects are on the same level or slightly higher than the player
+    (i.e., too high to jump) using union probability to combine individual probabilities.
+    """
     results = []
     for obj in objects:
-        obj_y = obj[..., 2]
-        is_same_or_higher = (obj_y >= player_y) & (obj_y - player_y <= vertical_tolerance)
-        results.append(bool_to_probs(is_same_or_higher))
-    return th.stack(results).any(dim=0)
+        results.append(too_high_to_jump(player, obj))
+    stacked = th.stack(results)  # Shape: [number_of_objects, ...]
+    # Combine the probabilities using the union probability formula:
+    # P(at least one) = 1 - ∏ (1 - p_i)
+    combined_prob = 1 - th.prod(1 - stacked, dim=0)
+    return combined_prob
 
 
 def _not_close_by(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -305,10 +314,13 @@ def above_combi(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: floa
     results = []
     for obj in objects:
         obj_y = obj[..., 2]
+        # Compute the probability that the object is above the player.
         is_above = sigmoid_smoothing(obj_y > player_y, temperature)
         results.append(is_above)
-    return th.stack(results).max(dim=0).values
-
+    # Stack the probabilities into a single tensor along a new dimension.
+    stacked = th.stack(results)  # Shape: [number_of_objects, ...]
+    # Probability that at least one object is above = 1 - (1 - p1)*(1 - p2)*...*(1 - p_n)
+    return 1 - th.prod(1 - stacked, dim=0)
 
 def test_predicate_global(global_state: th.Tensor) -> th.Tensor:
     result = global_state[..., 0, 2] < 100

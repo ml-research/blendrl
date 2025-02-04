@@ -54,12 +54,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         "left": 4,
         "down": 5,
         "up_right": 6,
-        "up_left": 7,
-        "fire_up": 10,
-        "fire_left": 12,
-        "fire_right": 11,
-        "fire_up_right": 14,
-        "fire_up_left": 15
+        "up_left": 7
     }
     pred_names: Sequence
 

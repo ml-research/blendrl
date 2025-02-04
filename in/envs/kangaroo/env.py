@@ -72,12 +72,7 @@ class NudgeEnv(NudgeBaseEnv):
         "left": 4,
         "down": 5,
         "up_right": 6,
-        "up_left": 7,
-        "up_fire": 10,
-        "left_fire": 12,
-        "right_fire": 11,
-        "up_right_fire": 14,
-        "up_left_fire": 15
+        "up_left": 7
     }
     pred_names: Sequence
 
