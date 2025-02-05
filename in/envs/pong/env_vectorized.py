@@ -7,6 +7,8 @@ from ocatari.ram.pong import MAX_NB_OBJECTS
 import gymnasium as gym
 import time
 import numpy as np
+from HackAtari.hackatari.games import pong
+from hackatari.core import HackAtari
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip
     ClipRewardEnv,
@@ -19,7 +21,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
+    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -27,8 +29,8 @@ def make_env(env):
         env = FireResetEnv(env)
     env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
+    env = gym.wrappers.GrayscaleObservation(env)
+    env = gym.wrappers.FrameStackObservation(env, 4)
     return env
 
 
@@ -71,8 +73,19 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             seed (int): Seed for the environment.
         """
         super().__init__(mode)
-        # set up multiple envs
         self.n_envs = n_envs
+        # self.envs = [
+        #     HackAtari(
+        #         env_name="ALE/Pong-v5",
+        #         mode="ram",
+        #         obs_mode="ori",
+        #         render_mode=render_mode,
+        #         render_oc_overlay=render_oc_overlay
+        #     )
+        #     for i in range(n_envs)
+        # ]
+        # for i in range(n_envs):
+        #     self.envs[i]._env = make_env(self.envs[i]._env)
         # initialize each HackAtari environment
         self.envs = [
             OCAtari(
@@ -84,7 +97,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             )
             for _ in range(n_envs)
         ]
-        # apply wrapper to _env
         for i in range(n_envs):
             self.envs[i]._env = make_env(self.envs[i]._env)
 
@@ -117,10 +129,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             obs = torch.tensor(obs).float()
             state = env.objects
             raw_state = obs
-            # logic_state, neural_state = self.extract_logic_state(
-            #     state
-            # ), self.extract_neural_state(raw_state)
-            logic_state, neural_state = self.convert_state(state, raw_state)
+            logic_state, neural_state = self.extract_logic_state(state), self.extract_neural_state(raw_state)
             logic_states.append(logic_state)
             neural_states.append(neural_state)
             seed_i += 1
@@ -148,27 +157,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         for i, env in enumerate(self.envs):
             action = actions[i]
             # Step in the environment
-            obs, reward, terminated, truncated, info = env.step(action)
-            done = terminated or truncated
-
-            # Handle terminal states and episodic statistics
-            if done:
-                print(f"Environment {i} is done. Resetting...")
-
-                # Extract episodic statistics before resetting
-                if 'final_info' in info and 'episode' in info['final_info']:
-                    episode_stats = info['final_info']['episode']
-                    episodic_return = float(episode_stats['r'][0])  # Total reward
-                    episodic_length = int(episode_stats['l'][0])  # Episode length
-                    print(f"Env {i}: episodic_return={episodic_return}, episodic_length={episodic_length}")
-                else:
-                    episodic_return = 0.0
-                    episodic_length = 0
-                    print(f"Env {i}: No episodic stats found in final_info.")
-
-                # Reset environment
-                obs, _ = env.reset()
-
+            obs, reward, truncation, done, info = env.step(action)
             raw_state = torch.tensor(obs).float()
             state = env.objects
             logic_state, neural_state = self.convert_state(state, raw_state)
@@ -177,9 +166,12 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             # Append results to lists
             observations.append(obs)
             rewards.append(reward)
-            truncations.append(truncated)
+            truncations.append(truncation)
             dones.append(done)
             infos.append(info)
+        end = time.time()
+        diff = end - start
+
         end = time.time()
         diff = end - start
         return (
@@ -201,11 +193,12 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         logic_state = np.zeros((self.n_objects, self.n_features))
 
         for idx, obj in enumerate(raw_state):
-            if obj.category == "player":
+            print(obj)
+            if obj.category == "Player":
                 logic_state[idx][0] = 1
-            elif obj.category == "ball":
+            elif obj.category == "Ball":
                 logic_state[idx][1] = 1
-            elif "enemy" in obj.category:
+            elif "Enemy" in obj.category:
                 logic_state[idx][2] = 1
             logic_state[idx][-4:] = np.array(obj.h_coords).flatten()
         return torch.tensor(logic_state, dtype=torch.float32)
