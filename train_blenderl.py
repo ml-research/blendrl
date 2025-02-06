@@ -107,8 +107,8 @@ class Args:
     """the mode for the blend (logic or neural)"""
     blend_function: str = "softmax"
     """the function to blend the neural and logic agents: softmax or gumbel_softmax"""
-    actor_mode: str = "hybrid"
-    """the mode for the agent"""
+    actor_mode: str = "logic"
+    """the mode for the agent (hybrid logic or neural)"""
     rules: str = "default"
     """the ruleset used in the agent"""
     save_steps: int = 5000000
