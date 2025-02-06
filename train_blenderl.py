@@ -57,7 +57,7 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
 
     # Algorithm specific arguments
-    env_id: str = "Kangaroo-v5"
+    env_id: str = "Freeway-v0"
     """the id of the environment"""
     total_timesteps: int = 60000000
     """total timesteps of the experiments"""
@@ -99,7 +99,7 @@ class Args:
     """the number of iterations (computed in runtime)"""
 
     # added
-    env_name: str = "kangaroo"
+    env_name: str = "freeway"
     """the name of the environment"""
     algorithm: str = "blender"
     """the algorithm used in the agent"""
