@@ -3,7 +3,7 @@ import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
 from hackatari.core import HackAtari
 import torch as th
-from ocatari.ram.donkeykong import MAX_ESSENTIAL_OBJECTS
+from ocatari.ram.donkeykong import MAX_NB_OBJECTS
 import gymnasium as gym
 from ocatari.core import OCAtari
 
@@ -18,7 +18,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
+    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -26,8 +26,8 @@ def make_env(env):
         env = FireResetEnv(env)
     # env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
+    env = gym.wrappers.GrayscaleObservation(env)
+    env = gym.wrappers.FrameStackObservation(env, 4)
     return env
 
 
@@ -43,8 +43,8 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         seed (int): Seed for the environment.
     """
     name = "donkeykong"
-    # MAX_ESSENTIAL_OBJECTS = {
-    #     'Player': 1, "DonkeyKong": 1, "Girlfriend": 1, "Hammer": 1, "Barrel": 6, "Ladder": 10
+    # MAX_NB_OBJECTS = {
+    #     'Player': 1, "DonkeyKong": 1, "Girlfriend": 1, "Hammer": 1, "Barrel": 4, "Ladder": 10
     # }
     pred2action = {
         'noop': 0,
@@ -52,11 +52,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         'up': 2,
         'right': 3,
         'left': 4,
-        'down': 5,
-        'up_right': 6,
-        'up_left': 7,
-        'fire_right': 11,
-        'fire_left': 12
+        'down': 5
     }
     pred_names: Sequence
 
@@ -90,17 +86,18 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
 
         self.n_actions = len(self.pred2action)
         self.n_raw_actions = 18
-        self.n_objects = 20
+        self.n_objects = 18
         self.n_features = 4  # visible, x-pos, y-pos, right-facing
         self.seed = seed
+        self.object_memory = {}
 
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
         offset = 0
-        for (obj, max_count) in MAX_ESSENTIAL_OBJECTS.items():
+        for (obj, max_count) in MAX_NB_OBJECTS.items():
             self.obj_offsets[obj] = offset
             offset += max_count
-        self.relevant_objects = set(MAX_ESSENTIAL_OBJECTS.keys())
+        self.relevant_objects = set(MAX_NB_OBJECTS.keys())
 
     def reset(self):
         """
@@ -130,17 +127,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     def step(self, actions, is_mapped=False):
         """
         Perform a step in the environment.
-        
-        Args:
-            actions (torch.Tensor): Actions to be performed in the environment.
-            is_mapped (bool): Whether the actions are already mapped.
-        Returns:
-            Tuple: Tuple containing:
-                - torch.Tensor: Observations.
-                - list: Rewards.
-                - list: Truncations.
-                - list: Dones.
-                - list: Infos.
         """
         assert len(actions) == self.n_envs, "Invalid number of actions: n_actions is {} and n_envs is {}".format(
             len(actions), self.n_envs)
@@ -157,8 +143,10 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             action = actions[i]
             # make a step in the env
             obs, reward, truncation, done, info = env.step(action)
-            raw_state = torch.tensor(obs).float()
+            obs = th.tensor(obs).float()
+            # get logic and neural state
             state = env.objects
+            raw_state = obs
             logic_state, neural_state = self.convert_state(state, raw_state)
             logic_states.append(logic_state)
             neural_states.append(neural_state)
@@ -170,18 +158,14 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
 
         return (torch.stack(logic_states), torch.stack(neural_states)), rewards, truncations, dones, infos
 
+    
+
     def extract_logic_state(self, input_state):
         """ 
         Extracts the logic state from the input state.
-        Args:
-            input_state (list): List of objects in the environment.
-        Returns:
-            torch.Tensor: Logic state.
         """
         state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
-
-        obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
-
+        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
         for obj in input_state:
             if obj.category not in self.relevant_objects:
                 continue
@@ -193,14 +177,11 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
                 state[idx] = th.tensor([1, *obj.center, orientation])
             obj_count[obj.category] += 1
         return state
+    
 
     def extract_neural_state(self, raw_input_state):
         """
-        Extracts the neural state from the raw input state.
-        Args:
-            raw_input_state (torch.Tensor): Raw input state.
-        Returns:
-            torch.Tensor: Neural state.
+        Extracts the neural state from the raw input state
         """
         return raw_input_state
 

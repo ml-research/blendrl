@@ -3,7 +3,7 @@ import torch
 from nudge.env import NudgeBaseEnv
 import numpy as np
 import torch as th
-from ocatari.ram.donkeykong import MAX_ESSENTIAL_OBJECTS
+from ocatari.ram.donkeykong import MAX_NB_OBJECTS
 import gymnasium as gym
 from ocatari.core import OCAtari
 
@@ -20,7 +20,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
+    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -28,8 +28,8 @@ def make_env(env):
         env = FireResetEnv(env)
     # env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
+    env = gym.wrappers.GrayscaleObservation(env)
+    env = gym.wrappers.FrameStackObservation(env, 4)
     return env
 
 
@@ -45,8 +45,8 @@ class NudgeEnv(NudgeBaseEnv):
         seed (int): Seed for the environment.
     """
     name = "donkeykong"
-    # MAX_ESSENTIAL_OBJECTS = {
-    #     'Player': 1, "DonkeyKong": 1, "Girlfriend": 1, "Hammer": 1, "Barrel": 6, "Ladder": 10
+    # MAX_NB_OBJECTS = {
+    #     'Player': 1, "DonkeyKong": 1, "Girlfriend": 1, "Hammer": 1, "Barrel": 4, "Ladder": 10
     # }
     pred2action = {
         'noop': 0,
@@ -54,11 +54,7 @@ class NudgeEnv(NudgeBaseEnv):
         'up': 2,
         'right': 3,
         'left': 4,
-        'down': 5,
-        'up_right': 6,
-        'up_left': 7,
-        'fire_right': 11,
-        'fire_left': 12
+        'down': 5
     }
     pred_names: Sequence
 
@@ -85,17 +81,17 @@ class NudgeEnv(NudgeBaseEnv):
         self.env._env = make_env(self.env._env)
         self.n_actions = len(self.pred2action)
         self.n_raw_actions = 18
-        self.n_objects = 20
+        self.n_objects = 18
         self.n_features = 4  # visible, x-pos, y-pos, right-facing
         self.seed = seed
 
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
         offset = 0
-        for (obj, max_count) in MAX_ESSENTIAL_OBJECTS.items():
+        for (obj, max_count) in MAX_NB_OBJECTS.items():
             self.obj_offsets[obj] = offset
             offset += max_count
-        self.relevant_objects = set(MAX_ESSENTIAL_OBJECTS.keys())
+        self.relevant_objects = set(MAX_NB_OBJECTS.keys())
 
     def reset(self):
         """
@@ -145,7 +141,7 @@ class NudgeEnv(NudgeBaseEnv):
         """
         state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
 
-        obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
+        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
         self.bboxes = th.zeros((self.n_objects, 4), dtype=th.int32)
 
         for obj in input_state:

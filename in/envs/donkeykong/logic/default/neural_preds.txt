@@ -1,12 +1,11 @@
 on_ladder:2:oplayer,oladder
 false_predicate:1:oplayer
 same_level_ladder:2:oplayer,oladder
-on_right:2:oplayer,oplatform
-on_left:2:oplayer,oplatform
-safe_to_climb:3:odonkeykong,obarrel,oplatform
-on_left:2:oplayer,obarrel
-on_right:2:oplayer,obarrel
+on_right:2:oplayer,oladder
+on_left:2:oplayer,oladder
+safe_to_climb:3:obarrel,odonkeykong,oladder
 close_by_barrel:2:oplayer,obarrel
+above:2:oplayer,ohammer
 has_no_hammer:2:oplayer,ohammer
 has_hammer:2:oplayer,ohammer
 close_by_hammer:2:oplayer,ohammer
@@ -15,5 +14,6 @@ on_left:2:oplayer,ohammer
 on_right:2:oplayer,ogirlfriend
 on_left:2:oplayer,ogirlfriend
 same_level:2:player,ogirlfriend
-no_donkeykong_between:3:oplayer,ogirlfriend,odonkeykong
-above:2:oplayer,ohammer
+close_by_barrel_with_hammer:2:oplayer,obarrel
+on_right:2:oplayer,obarrel
+on_left:2:oplayer,obarrel
