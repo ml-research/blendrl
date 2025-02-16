@@ -18,7 +18,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
+    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -26,8 +26,8 @@ def make_env(env):
         env = FireResetEnv(env)
     env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
+    env = gym.wrappers.GrayscaleObservation(env)
+    env = gym.wrappers.FrameStackObservation(env, 4)
     return env
 
 
@@ -60,7 +60,7 @@ class NudgeEnv(NudgeBaseEnv):
 
     def __init__(self, mode: str, render_mode="rgb_array", render_oc_overlay=False, seed=None):
         super().__init__(mode)
-        self.env = OCAtari(env_name="ALE/Pong-v5", mode="ram",obs_mode="ori",
+        self.env = OCAtari(env_name="Pong-v4", mode="ram",obs_mode="ori",
                            render_mode=render_mode, render_oc_overlay=render_oc_overlay)
 
         self.env._env = make_env(self.env._env)
@@ -69,6 +69,7 @@ class NudgeEnv(NudgeBaseEnv):
         self.n_objects = 3
         self.n_features = 4
         self.seed = seed
+        self.object_memory = {}
 
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
@@ -93,38 +94,36 @@ class NudgeEnv(NudgeBaseEnv):
         return (logic_state, neural_state), reward, done, truncations, infos
 
     def extract_logic_state(self, raw_state):
-        n_features = 4
-        n_objects = 3
-        logic_state = np.zeros((n_objects, n_features))
-        for i, entity in enumerate(raw_state):
-            if entity.category == "player":
-                logic_state[i][0] = 1
-            elif entity.category == 'ball':
-                logic_state[i][1] = 1
-            elif "enemy" in entity.category:
-                logic_state[i][2] = 1
-            logic_state[i][-4:] = np.array(entity.h_coords).flatten()
-            return th.tensor(logic_state)
+        # n_features = 4
+        # n_objects = 3
+        # logic_state = np.zeros((n_objects, n_features))
+        # for i, entity in enumerate(raw_state):
+        #     if entity.category == "player":
+        #         logic_state[i][0] = 1
+        #     elif entity.category == 'ball':
+        #         logic_state[i][1] = 1
+        #     elif "enemy" in entity.category:
+        #         logic_state[i][2] = 1
+        #     logic_state[i][-4:] = np.array(entity.h_coords).flatten()
+        #     return th.tensor(logic_state)
 
-        # state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
-        # # seve bboxes for exlanation rendering
-        # self.bboxes = th.zeros((self.n_objects, 4), dtype=th.int32)
-        #
-        # obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
-        #
-        # for obj in raw_state:
-        #     if obj.category not in self.relevant_objects:
-        #         continue
-        #     idx = self.obj_offsets[obj.category] + obj_count[obj.category]
-        #
-        #     orientation = (
-        #         obj.orientation.value if obj.orientation is not None else 0
-        #     )
-        #     state[idx] = th.tensor([1, *obj.center, orientation])
-        #     obj_count[obj.category] += 1
-        #     self.bboxes[idx] = th.tensor(obj.xywh)
-        # return state
+        state = torch.zeros((self.n_objects, self.n_features), dtype=torch.float32)
+        for idx, obj in enumerate(raw_state):
+            if obj.category == "player":
+                state[idx][0] = 1
+            elif obj.category == "ball":
+                state[idx][1] = 1
+            elif "enemy" in obj.category:
+                state[idx][2] = 1
 
+            current_x, current_y = obj.center
+            # Retrieve previous coordinates from memory (if available)
+            prev_x, prev_y = self.object_memory.get(obj.category, (current_x, current_y))
+            # Store previous and current coordinates
+            state[idx][-4:] = torch.tensor([prev_x, prev_y, current_x, current_y], dtype=torch.float32)
+            # Update object_memory with current position
+            self.object_memory[obj.category] = (current_x, current_y)
+        return state
 
 
     # def extract_neural_state(self, raw_state):

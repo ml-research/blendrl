@@ -7,8 +7,6 @@ from ocatari.ram.pong import MAX_NB_OBJECTS
 import gymnasium as gym
 import time
 import numpy as np
-from HackAtari.hackatari.games import pong
-from hackatari.core import HackAtari
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip
     ClipRewardEnv,
@@ -27,7 +25,7 @@ def make_env(env):
     env = EpisodicLifeEnv(env)
     if "FIRE" in env.unwrapped.get_action_meanings():
         env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
+    # env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
     env = gym.wrappers.GrayscaleObservation(env)
     env = gym.wrappers.FrameStackObservation(env, 4)
@@ -89,7 +87,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         # initialize each HackAtari environment
         self.envs = [
             OCAtari(
-                env_name="ALE/Pong-v5",
+                env_name="Pong-v4",
                 mode="ram",
                 obs_mode="ori",
                 render_mode=render_mode,
@@ -105,6 +103,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         self.n_objects = 3
         self.n_features = 4
         self.seed = seed
+        self.object_memory = {}
 
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
@@ -171,7 +170,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             infos.append(info)
         end = time.time()
         diff = end - start
-
         end = time.time()
         diff = end - start
         return (
@@ -182,26 +180,59 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             infos,
         )
 
-    def extract_logic_state(self, raw_state):
+    def extract_logic_state1(self, raw_state):
         """
-        Extracts the logic state from the input state.
-        Args:
-            raw_state (list): List of objects in the environment.
-        Returns:
-            torch.Tensor: Logic state.
+        Extracts the logic state from the input state using object_memory.
         """
+        # state = torch.zeros((self.n_objects, self.n_features), dtype=torch.float32)
+        # for idx, obj in enumerate(raw_state):
+        #     if obj.category == "player":
+        #         state[idx][0] = 1
+        #     elif obj.category == "ball":
+        #         state[idx][1] = 1
+        #     elif "enemy" in obj.category:
+        #         state[idx][2] = 1
+        #
+        #     current_x, current_y = obj.center
+        #     # Retrieve previous coordinates from memory (if available)
+        #     prev_x, prev_y = self.object_memory.get(obj.category, (current_x, current_y))
+        #     # Store previous and current coordinates
+        #     state[idx][-4:] = torch.tensor([prev_x, prev_y, current_x, current_y], dtype=torch.float32)
+        #     # Update object_memory with current position
+        #     self.object_memory[obj.category] = (current_x, current_y)
         logic_state = np.zeros((self.n_objects, self.n_features))
 
         for idx, obj in enumerate(raw_state):
-            print(obj)
-            if obj.category == "Player":
+            if obj.category == "player":
                 logic_state[idx][0] = 1
-            elif obj.category == "Ball":
+            elif obj.category == "ball":
                 logic_state[idx][1] = 1
-            elif "Enemy" in obj.category:
+            elif "enemy" in obj.category:
                 logic_state[idx][2] = 1
             logic_state[idx][-4:] = np.array(obj.h_coords).flatten()
         return torch.tensor(logic_state, dtype=torch.float32)
+        return state
+    
+    def extract_logic_state(self, raw_state):
+        """
+        Extracts the logic state from the input state using object memory.
+        """
+        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
+        state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
+
+        for obj in raw_state:
+            if obj.category not in self.relevant_objects:
+                continue
+            idx = self.obj_offsets[obj.category] + obj_count[obj.category]
+            current_x, current_y = obj.center
+            # Retrieve previous (x, y) from memory (if available)
+            prev_x, prev_y = self.object_memory.get(obj.category, (current_x, current_y))
+            # Store previous position before updating memory
+            self.object_memory[obj.category] = (current_x, current_y)
+            # Update state with previous and current coordinates from object memory
+            state[idx] = th.tensor([prev_x, prev_y, current_x, current_y])
+        return state
+
 
     def extract_neural_state(self, raw_input_state):
         """

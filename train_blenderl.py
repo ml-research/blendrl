@@ -31,7 +31,7 @@ from nudge.utils import load_model_train
 # Log in to your W&B account
 import wandb
 
-OUT_PATH = Path("out/")
+OUT_PATH = Path("out_pong/")
 IN_PATH = Path("in/")
 
 torch.set_num_threads(5)
@@ -57,7 +57,7 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
 
     # Algorithm specific arguments
-    env_id: str = "Seaquest-v4"
+    env_id: str = "Pong-v4"
     """the id of the environment"""
     total_timesteps: int = 60000000
     """total timesteps of the experiments"""
@@ -99,7 +99,7 @@ class Args:
     """the number of iterations (computed in runtime)"""
 
     # added
-    env_name: str = "seaquest"
+    env_name: str = "pong"
     """the name of the environment"""
     algorithm: str = "blender"
     """the algorithm used in the agent"""
@@ -107,7 +107,7 @@ class Args:
     """the mode for the blend (logic or neural)"""
     blend_function: str = "softmax"
     """the function to blend the neural and logic agents: softmax or gumbel_softmax"""
-    actor_mode: str = "hybrid"
+    actor_mode: str = "logic"
     """the mode for the agent"""
     rules: str = "default"
     """the ruleset used in the agent"""
