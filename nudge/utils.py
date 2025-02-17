@@ -15,6 +15,7 @@ from functools import reduce
 from nsfr.utils.torch import softor
 
 from nsfr.nsfr import NSFReasoner
+from neumann.neumann import NEUMANN
  
 def to_proportion(dic):
     # Using reduce to get the sum of all values in the dictionary
@@ -213,9 +214,7 @@ def print_program(agent, mode="softor"):
             actor = agent    
     if isinstance(actor, NSFReasoner):
         print_program_nsfr(actor, mode) 
-    else:
-        # the neumann reasoner
-        from neumann.neumann import NEUMANN
+    elif isinstance(actor, NEUMANN):
         print_program_neumann(actor, mode)
         
 def print_program_nsfr(actor, mode):

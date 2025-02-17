@@ -1,5 +1,5 @@
 ### *Refactoring is undergoing.
-# BlendRL: A Framework for Merging Symbolic and Neural Policies (ICLR 2025)
+# BlendRL: A Framework for Merging Symbolic and Neural Policies
 [Hikaru Shindo](https://www.hikarushindo.com/), [Quentin Delfosse](https://ml-research.github.io/people/qdelfosse/index.html), [Devendra Singh Dhami](https://sites.google.com/view/devendradhami), [Kristian Kersting](https://ml-research.github.io/people/kkersting/index.html)
 
 
@@ -9,34 +9,9 @@
 <img src="assets/kangaroo_agent.gif" width=800>
 
 ## Quickstart
+Install `nsfr` and `nudge`.
 
-### Installation
-Follow [INSTALLATION.md](INSTALLATION.md) to install dependencies.
-
-
-<!--
-1. Install all requirements via
-    ```bash
-    pip install -r requirements.txt
-    ```
-2. On project level, simply run `python train.py` to start a new training run.
--->
-
-Download the trained agents:
-```
-wget https://hessenbox.tu-darmstadt.de/dl/fiCNznPuWkALH8JaCJWHeeAV/models.zip
-unzip models.zip
-rm models.zip
-```
-Then you can run the play script:
-```
-python play_gui.py --env-name kangaroo --agent-path models/kangaroo_demo
-python play_gui.py --env-name seaquest --agent-path models/seaquest_demo
-```
-Note that a checkpoint is required to run the play script.
-
-
-You can run the training script:
+Training script:
 ```
 python train_blenderl.py --env-name seaquest --joint-training --num-steps 128 --num-envs 5 --gamma 0.99
 ```
@@ -44,16 +19,33 @@ python train_blenderl.py --env-name seaquest --joint-training --num-steps 128 --
 - --num-steps: the number of steps for policy rollout
 - --num-envs: the number of environments to train agents
 - --gamma: the discount factor for future rewards
-
-
+<!--
+1. Install all requirements via
+    ```bash
+    pip install -r requirements.txt
+    ```
+2. On project level, simply run `python train.py` to start a new training run.
+-->
+Download the trained agents:
+```
+wget https://hessenbox.tu-darmstadt.de/dl/fiCNznPuWkALH8JaCJWHeeAV/models.zip
+unzip models.zip
+rm models.zip
+```
+Play script:
+```
+python play_gui.py --env-name kangaroo --agent-path models/kangaroo_demo
+python play_gui.py --env-name seaquest --agent-path models/seaquest_demo
+```
+Note that a checkpoint is required to run the play script.
 ## How to Use
-<!-- ### Hyperparameters
-The hyperparameters are configured inside `in/config/default.yaml` which is loaded as default. You can specify a different configuration by providing the corresponding YAML file path as an argument, e.g., `python train.py in/config/my_config.yaml`. A description of all hyperparameters can be found in `train.py`. -->
+### Hyperparameters
+The hyperparameters are configured inside `in/config/default.yaml` which is loaded as default. You can specify a different configuration by providing the corresponding YAML file path as an argument, e.g., `python train.py in/config/my_config.yaml`. A description of all hyperparameters can be found in `train.py`.
 
 ### The Logic
 Inside `in/envs/[env_name]/logic/[ruleset_name]/`, you find the logic rules that are used as a starting point for training. You can change them or create new rule sets. The ruleset to use is specified with the hyperparam `rules`.
 
-<!-- ### Install Locally
+### Install Locally
 If you want to use NUDGE within other projects, you can install NUDGE locally as follows:
 1. Inside ```nsfr/``` run
     ```bash
@@ -62,9 +54,9 @@ If you want to use NUDGE within other projects, you can install NUDGE locally as
 2. Inside ```nudge/``` run
     ```bash
     python setup.py develop
-    ``` -->
+    ```
 
-<!-- ### Ohter dependencies
+### Ohter dependencies
 1. Install packages by `pip install -r requirements.txt` 
 
 2. PyG and torch-scatter for neumann
@@ -72,7 +64,7 @@ Install PyG and torch-scatter packages for neumann reasoner. See the [installati
     ```
     pip install torch==1.12.0+cu116 torchvision==0.13.0+cu116 -f https://download.pytorch.org/whl/torch_stable.html
     pip install torch_geometric
-    pip install pyg_lib torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-1.12.0+cu116.html -->
+    pip install pyg_lib torch_scatter torch_sparse -f https://data.pyg.org/whl/torch-1.12.0+cu116.html
     ```
 
 

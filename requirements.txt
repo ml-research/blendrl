@@ -1,14 +1,10 @@
 tyro
-pygame
-vidmaker
-opencv-python==4.5.5.64
-stable-baselines3
+gymnasium
+hackatari
+torch-geometric 
+networkx
 captum
-ocatari
-hackatari @ git+https://github.com/k4ntz/HackAtari.git
-pyyaml
-tensorboard
 rtpt
 wandb
-gymnasium[atari, accept-rom-license]
-torch==2.4.0
+ocatari
+stable_baselines3==2.3.2
