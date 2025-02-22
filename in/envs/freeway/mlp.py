@@ -2,14 +2,14 @@ import torch
 
 
 class MLP(torch.nn.Module):
-    def __init__(self, has_softmax=False, out_size=3, as_dict=False, logic=False, device=None):
+    def __init__(self, device, has_softmax=False, has_sigmoid=False, out_size=3, as_dict=False, logic=False):
         super().__init__()
         self.logic = logic
         self.as_dict = as_dict
         self.device = device
         encoding_base_features = 2
         encoding_entity_features = 4
-        encoding_max_entities = 11
+        encoding_max_entities = 12
         self.num_in_features = (encoding_base_features + encoding_entity_features) * encoding_max_entities  
 
         modules = [
@@ -28,11 +28,13 @@ class MLP(torch.nn.Module):
 
         if has_softmax:
             modules.append(torch.nn.Softmax(dim=-1))
-
+        if has_sigmoid:
+            modules.append(torch.nn.Sigmoid())
+            
         self.mlp = torch.nn.Sequential(*modules)
         self.mlp.to(device)
 
     def forward(self, state):
-        features = state.float()
+        features = state.float().view(-1, self.num_in_features)
         y = self.mlp(features)
         return y

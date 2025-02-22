@@ -2,12 +2,11 @@ import time
 from typing import Sequence
 import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
-from hackatari.core import HackAtari
 import torch as th
 from ocatari.ram.freeway import MAX_NB_OBJECTS
 import gymnasium as gym
-
-import time
+from ocatari.core import OCAtari
+from rtpt import RTPT
 
 from stable_baselines3.common.atari_wrappers import (  # isort:skip
     ClipRewardEnv,
@@ -20,7 +19,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
+    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -28,8 +27,8 @@ def make_env(env):
         env = FireResetEnv(env)
     env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
+    env = gym.wrappers.GrayscaleObservation(env)
+    env = gym.wrappers.FrameStackObservation(env, 4)
     return env
 
 
@@ -71,18 +70,15 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             render_oc_overlay (bool): Whether to render the overlay of OC.
             seed (int): Seed for the environment.
         """
-        print(mode)
         super().__init__(mode)
         # set up multiple envs
         self.n_envs = n_envs
         # initialize each HackAtari environment
         self.envs = [
-            HackAtari(
+            OCAtari(
                 env_name="ALE/Freeway-v5",
                 mode="ram",
                 obs_mode="ori",
-                modifs=[],
-                #rewardfunc_path="in/envs/freeway/blenderl_reward.py",
                 render_mode=render_mode,
                 render_oc_overlay=render_oc_overlay,
             )
@@ -92,10 +88,10 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         for i in range(n_envs):
             self.envs[i]._env = make_env(self.envs[i]._env)
 
-        self.n_actions = 3
-        # self.n_raw_actions = 18
-        self.n_objects = 12
-        self.n_features = 6
+        self.n_actions = len(self.pred2action)
+        self.n_raw_actions = 3
+        self.n_objects = 11
+        self.n_features = 4
         self.seed = seed
 
         # Compute index offsets. Needed to deal with multiple same-category objects
@@ -188,10 +184,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         diff = end - start
         # print("Time taken for step: ", diff)
 
-        end = time.time()
-        diff = end - start
-        # print("Time taken for step: ", diff)
-
         # observations = torch.stack(observations)
         return (
             (torch.stack(logic_states), torch.stack(neural_states)),
@@ -207,13 +199,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         Args:
             raw_state (list): List of objects in the environment.
         Returns:
-            torch.Tensor: Logic state with 6 features per object:
-            - visibility (1/0)
-            - pixel_x
-            - pixel_y
-            - grid_x
-            - grid_y
-            - type (1=chicken, 2=car)
+            torch.Tensor: Logic state.
             
             Comment:
             in ocatari/ram/freeway.py:
@@ -226,29 +212,17 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
 
         for obj in raw_state:
-            print(f"Processing object: {obj}")  # Debug print
             if obj.category not in self.relevant_objects:
                 continue
-            
             idx = self.obj_offsets[obj.category] + obj_count[obj.category]
-            
-            # Get both coordinate systems
-            pixel_x, pixel_y = obj.center  # Pixel coordinates
-            grid_x, grid_y = obj.xy if hasattr(obj, 'xy') else (0, 0)  # Grid coordinates
-            
-            # Create 6-feature vector
-            obj_type = 1 if obj.category == 'Chicken' else 2
-            state[idx] = th.tensor([
-                1,           # visibility
-                pixel_x,     # pixel x-coordinate
-                pixel_y,     # pixel y-coordinate
-                grid_x,      # grid x-coordinate
-                grid_y,      # grid y-coordinate
-                obj_type     # object type
-            ])
-            
+            if obj.category == "Time":
+                state[idx] = th.Tensor([1, obj.value, 0, 0])
+            else:
+                orientation = (
+                    obj.orientation.value if obj.orientation is not None else 0
+                )
+                state[idx] = th.tensor([1, *obj.center, orientation])
             obj_count[obj.category] += 1
-
         return state
 
     def extract_neural_state(self, raw_input_state):

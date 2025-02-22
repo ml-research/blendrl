@@ -1,7 +1,6 @@
 import time
 from typing import Sequence
 import torch
-from HackAtari.hackatari.games import kangaroo
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
