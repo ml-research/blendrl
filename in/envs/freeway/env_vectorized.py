@@ -80,7 +80,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         self.n_envs = n_envs
         self.envs = [
             OCAtari(
-            OCAtari(
                 env_name="ALE/Freeway-v5",
                 mode="ram",
                 obs_mode="ori",
