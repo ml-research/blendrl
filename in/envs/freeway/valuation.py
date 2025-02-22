@@ -1,14 +1,18 @@
-import torch
+import torch as th
 from nsfr.utils.common import bool_to_probs
 
+""" in ocatari/ram/freeway.py :
+    MAX_NB_OBJECTS = {'Chicken': 2, 'Car': 10}
+    
+"""
 
-def type(z: torch.Tensor, a: torch.Tensor) -> torch.Tensor:
-    z_type = z[:, 0:2]  # [1, 0, 0, 0] * [1.0, 0, 0, 0] .sum = 0.0  type(obj1, key):0.0
-    prob = (a * z_type).sum(dim=1)
-    return prob
+# def type(z: th.Tensor, a: th.Tensor) -> th.Tensor:
+#     z_type = z[:, 0:2]  # [1, 0, 0, 0] * [1.0, 0, 0, 0] .sum = 0.0  type(obj1, key):0.0
+#     prob = (a * z_type).sum(dim=1)
+#     return prob
 
 
-def closeby(z_1: torch.Tensor, z_2: torch.Tensor) -> torch.Tensor:
+def closeby(z_1: th.Tensor, z_2: th.Tensor) -> th.Tensor:
     c_1 = z_1[:, -2:]
     c_2 = z_2[:, -2:]
 
@@ -20,7 +24,7 @@ def closeby(z_1: torch.Tensor, z_2: torch.Tensor) -> torch.Tensor:
     return result
 
 
-def on_left(z_1: torch.Tensor, z_2: torch.Tensor):
+def on_left(z_1: th.Tensor, z_2: th.Tensor):
     c_1 = z_1[:, -2]
     c_2 = z_2[:, -2]
     diff = c_2 - c_1
@@ -28,7 +32,7 @@ def on_left(z_1: torch.Tensor, z_2: torch.Tensor):
     return result
 
 
-def on_right(z_1: torch.Tensor, z_2: torch.Tensor):
+def on_right(z_1: th.Tensor, z_2: th.Tensor):
     c_1 = z_1[:, -2]
     c_2 = z_2[:, -2]
     diff = c_2 - c_1
@@ -36,7 +40,7 @@ def on_right(z_1: torch.Tensor, z_2: torch.Tensor):
     return result
 
 
-def same_row(z_1: torch.Tensor, z_2: torch.Tensor):
+def same_row(z_1: th.Tensor, z_2: th.Tensor):
     c_1 = z_1[:, -1]
     c_2 = z_2[:, -1]
     diff = abs(c_2 - c_1)
@@ -44,7 +48,7 @@ def same_row(z_1: torch.Tensor, z_2: torch.Tensor):
     return result
 
 
-def above_row(z_1: torch.Tensor, z_2: torch.Tensor):
+def above_row(z_1: th.Tensor, z_2: th.Tensor):
     c_1 = z_1[:, -1]
     c_2 = z_2[:, -1]
     diff = c_2 - c_1
@@ -53,13 +57,13 @@ def above_row(z_1: torch.Tensor, z_2: torch.Tensor):
     return result1 * result2
 
 
-def top5car(z_1: torch.Tensor):
+def top5car(z_1: th.Tensor):
     y = z_1[:, -1]
     result = bool_to_probs(y > 100)
     return result
 
 
-def bottom5car(z_1: torch.Tensor):
+def bottom5car(z_1: th.Tensor):
     y = z_1[:, -1]
     result = bool_to_probs(y < 100)
     return result

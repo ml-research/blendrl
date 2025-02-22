@@ -28,11 +28,13 @@ class MLP(torch.nn.Module):
 
         if has_softmax:
             modules.append(torch.nn.Softmax(dim=-1))
-
+        if has_sigmoid:
+            modules.append(torch.nn.Sigmoid())
+            
         self.mlp = torch.nn.Sequential(*modules)
         self.mlp.to(device)
 
     def forward(self, state):
-        features = state.float()
+        features = state.float().view(-1, self.num_in_features)
         y = self.mlp(features)
         return y
