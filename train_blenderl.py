@@ -57,7 +57,7 @@ class Args:
     """whether to capture videos of the agent performances (check out `videos` folder)"""
 
     # Algorithm specific arguments
-    env_id: str = "Freeway-v0"
+    env_id: str = "ALE/Freeway-v5"
     """the id of the environment"""
     total_timesteps: int = 60000000
     """total timesteps of the experiments"""
@@ -294,8 +294,8 @@ def main():
             # update rtpt
             global_step += args.num_envs
             obs[step] = next_obs
-            # print(logic_obs.shape)
-            # print(next_logic_obs.shape)
+            print(logic_obs.shape)
+            print(next_logic_obs.shape)
             logic_obs[step] = next_logic_obs
             dones[step] = next_done
 

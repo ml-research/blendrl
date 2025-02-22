@@ -53,7 +53,7 @@ class NudgeEnv(NudgeBaseEnv):
                 neural_state.append([1, 0, 0, 0] + list(inst.xy))
             elif inst.category == "Car":
                 neural_state.append([0, 1, 0, 0] + list(inst.xy))
-
+        #return torch.Tensor(raw_input_state).unsqueeze(0)
         return np.array(neural_state).reshape(-1)
 
     def close(self):

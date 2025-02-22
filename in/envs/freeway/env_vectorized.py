@@ -2,10 +2,11 @@ import time
 from typing import Sequence
 import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
-from hackatari.core import HackAtari
 import torch as th
 from ocatari.ram.freeway import MAX_NB_OBJECTS
 import gymnasium as gym
+from ocatari.core import OCAtari
+
 
 import time
 
@@ -20,7 +21,7 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
+    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -28,8 +29,8 @@ def make_env(env):
         env = FireResetEnv(env)
     env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
+    env = gym.wrappers.GrayscaleObservation(env)
+    env = gym.wrappers.FrameStackObservation(env, 4)
     return env
 
 
@@ -71,18 +72,14 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             render_oc_overlay (bool): Whether to render the overlay of OC.
             seed (int): Seed for the environment.
         """
-        print(mode)
         super().__init__(mode)
         # set up multiple envs
         self.n_envs = n_envs
-        # initialize each HackAtari environment
         self.envs = [
-            HackAtari(
+            OCAtari(
                 env_name="ALE/Freeway-v5",
                 mode="ram",
                 obs_mode="ori",
-                modifs=[],
-                #rewardfunc_path="in/envs/freeway/blenderl_reward.py",
                 render_mode=render_mode,
                 render_oc_overlay=render_oc_overlay,
             )
@@ -93,7 +90,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             self.envs[i]._env = make_env(self.envs[i]._env)
 
         self.n_actions = 3
-        # self.n_raw_actions = 18
+        self.n_raw_actions = 3
         self.n_objects = 12
         self.n_features = 6
         self.seed = seed
@@ -166,13 +163,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             action = actions[i]
             # make a step in the env
             obs, reward, truncation, done, info = env.step(action)
-            # Check with multiple envs
-            # for obj in env.objects:
-            #     if "Player" in str(obj):
-            #         print("Env_{}".format(i), obj)
-            # if reward > 0.5:
-            #     print("Reward: ", reward)
-            # lazy frame to tensor
             raw_state = torch.tensor(obs).float()
             # get logic and neural state
             state = env.objects
@@ -226,7 +216,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
 
         for obj in raw_state:
-            print(f"Processing object: {obj}")  # Debug print
+            #print(f"Processing object: {obj}")  # Debug print
             if obj.category not in self.relevant_objects:
                 continue
             
