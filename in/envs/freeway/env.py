@@ -65,7 +65,7 @@ class NudgeEnv(NudgeBaseEnv):
         # self.env_ori._env = make_env_ori(self.env_ori._env)
         self.n_actions = len(self.pred2action)
         self.n_raw_actions = 3
-        self.n_objects = 11
+        self.n_objects = 12
         self.n_features = 4  # visible, x-pos, y-pos, right-facing
         self.seed = seed
 
@@ -136,6 +136,10 @@ class NudgeEnv(NudgeBaseEnv):
             if obj.category not in self.relevant_objects:
                 continue
             idx = self.obj_offsets[obj.category] + obj_count[obj.category]
+            if obj.category == "Chicken":
+                state[idx] = th.Tensor([1, 0, *obj.center])
+            elif obj.category == "Car":
+                state[idx] = th.Tensor([0, 1, *obj.center])
             obj_count[obj.category] += 1
             self.bboxes[idx] = th.tensor(obj.xywh)
         return state

@@ -294,8 +294,8 @@ def main():
             # update rtpt
             global_step += args.num_envs
             obs[step] = next_obs
-            print(logic_obs.shape)
-            print(next_logic_obs.shape)
+            #print(logic_obs.shape)
+            #print(next_logic_obs.shape)
             logic_obs[step] = next_logic_obs
             dones[step] = next_done
 

@@ -2,13 +2,13 @@ import torch
 
 
 class MLP(torch.nn.Module):
-    def __init__(self, has_softmax=False, out_size=6, as_dict=False, logic=False, device=None):
+    def __init__(self, has_softmax=False, has_sigmoid=False, out_size=6, as_dict=False, logic=False, device=None):
         super().__init__()
         self.logic = logic
         self.as_dict = as_dict
         self.device = device
         encoding_base_features = 0
-        encoding_entity_features = 6
+        encoding_entity_features = 4
         encoding_max_entities = 12
         self.num_in_features = (encoding_base_features + encoding_entity_features) * encoding_max_entities  
 

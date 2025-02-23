@@ -22,7 +22,6 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)
     env = gym.wrappers.Autoreset(env)
-    env = gym.wrappers.Autoreset(env)
     env = NoopResetEnv(env, noop_max=30)
     env = MaxAndSkipEnv(env, skip=4)
     env = EpisodicLifeEnv(env)
@@ -30,8 +29,6 @@ def make_env(env):
         env = FireResetEnv(env)
     env = ClipRewardEnv(env)
     env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayscaleObservation(env)
-    env = gym.wrappers.FrameStackObservation(env, 4)
     env = gym.wrappers.GrayscaleObservation(env)
     env = gym.wrappers.FrameStackObservation(env, 4)
     return env
@@ -92,10 +89,10 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         for i in range(n_envs):
             self.envs[i]._env = make_env(self.envs[i]._env)
 
-        self.n_actions = 3
+        self.n_actions = len(self.pred2action)
         self.n_raw_actions = 3
         self.n_objects = 12
-        self.n_features = 6
+        self.n_features = 4
         self.seed = seed
 
         # Compute index offsets. Needed to deal with multiple same-category objects
@@ -213,14 +210,12 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             if obj.category not in self.relevant_objects:
                 continue
             idx = self.obj_offsets[obj.category] + obj_count[obj.category]
-            if obj.category == "Time":
-                state[idx] = th.Tensor([1, obj.value, 0, 0])
-            else:
-                orientation = (
-                    obj.orientation.value if obj.orientation is not None else 0
-                )
-                state[idx] = th.tensor([1, *obj.center, orientation])
+            if obj.category == "Chicken":
+                state[idx] = th.Tensor([1, 0, *obj.center])
+            elif obj.category == "Car":
+                state[idx] = th.Tensor([0, 1, *obj.center])
             obj_count[obj.category] += 1
+        #print(f"Logic state: {state}")
         return state
 
     def extract_neural_state(self, raw_input_state):
