@@ -1,0 +1,7 @@
+oplayer:obj1
+oplayer_projectile:obj2
+otorpedos:obj3
+oenemy:obj4
+oenemy_projectile:obj5
+oasteroid:obj6
+image:img

@@ -1,0 +1,6 @@
+left_to_dodge(X):-.
+right_to_dodge(X):-.
+up_to_dodge(X):-.
+left_to_shoot(X):-.
+right_to_shoot(X):-.
+up_to_shoot(X):-.

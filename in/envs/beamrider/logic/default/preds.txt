@@ -1,0 +1,8 @@
+left_to_dodge:1:image
+right_to_dodge:1:image
+up_to_dodge:1:image
+left_to_shoot:1:image
+right_to_shoot:1:image
+up_to_shoot:1:image
+neural_agent:1:image
+logic_agent:1:image
