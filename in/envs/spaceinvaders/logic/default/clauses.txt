@@ -1,0 +1,7 @@
+shoot(X):-.
+noop_to_dodge(X):-.
+noop_to_shoot(X):-.
+left_to_dodge(X):-.
+left_to_shoot(X):-.
+right_to_dodge(X):-.
+right_to_shoot(X):-.
