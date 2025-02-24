@@ -59,7 +59,6 @@ def above_row(z_1: th.Tensor, z_2: th.Tensor):
 
 def top5car(z_1: th.Tensor):
     y = z_1[:, -1]
-    print(y)
     result = bool_to_probs(y > 100)
     return result
 
