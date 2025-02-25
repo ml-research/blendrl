@@ -157,9 +157,9 @@ class Renderer:
         pressed_keys = list(self.current_keys_down)
         pressed_keys.sort()
         pressed_keys = tuple(pressed_keys)
-        print(pressed_keys, self.keys2actions.keys())
         if pressed_keys in self.keys2actions.keys():
-            return self.keys2actions[pressed_keys]
+            action_name = self.keys2actions[pressed_keys].name
+            return self.action_meanings.index(action_name)
         else:
             return 0  # NOOP
 
