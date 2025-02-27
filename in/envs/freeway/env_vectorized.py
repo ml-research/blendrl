@@ -21,11 +21,6 @@ from stable_baselines3.common.atari_wrappers import (  # isort:skip
     NoopResetEnv,
 )
 
-MAX_NB_OBJECTS = {
-    "Chicken": 1,  # chicken
-    "Car": 10,  # up to 10 cars can be present
-}
-
 
 def make_env(env):
     env = gym.wrappers.RecordEpisodeStatistics(env)

@@ -4,16 +4,22 @@ from lark import Transformer
 from .logic import *
 
 
-def flatten(x): return [z for y in x for z in (
-    flatten(y) if hasattr(y, '__iter__') and not isinstance(y, str) else (y,))]
+def flatten(x):
+    return [
+        z
+        for y in x
+        for z in (
+            flatten(y) if hasattr(y, "__iter__") and not isinstance(y, str) else (y,)
+        )
+    ]
 
 
 class ExpTree(Transformer):
-    '''Functions to parse strings into logical objects using Lark
+    """Functions to parse strings into logical objects using Lark
 
     Attrs:
         lang (language): the language of first-order logic.
-    '''
+    """
 
     def __init__(self, lang):
         self.lang = lang
@@ -54,6 +60,7 @@ class ExpTree(Transformer):
         return func
 
     def predicate(self, alphas):
+        print("test", self.lang.preds)
         pred = [p for p in self.lang.preds if p.name == alphas[0]][0]
         return pred
 
