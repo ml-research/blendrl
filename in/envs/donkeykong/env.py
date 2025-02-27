@@ -1,36 +1,13 @@
 from typing import Sequence
 import torch
 from nudge.env import NudgeBaseEnv
+from hackatari.core import HackAtari
 import numpy as np
 import torch as th
 from ocatari.ram.donkeykong import MAX_NB_OBJECTS
 import gymnasium as gym
+from blendrl.env_utils import make_env
 from ocatari.core import OCAtari
-
-
-    
-from stable_baselines3.common.atari_wrappers import (  # isort:skip
-    ClipRewardEnv,
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
-
-
-def make_env(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.Autoreset(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    # env = ClipRewardEnv(env)
-    env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayscaleObservation(env)
-    env = gym.wrappers.FrameStackObservation(env, 4)
-    return env
 
 
 class NudgeEnv(NudgeBaseEnv):
@@ -103,7 +80,6 @@ class NudgeEnv(NudgeBaseEnv):
         """
         raw_state, _ = self.env.reset(seed=self.seed)
         state = self.env.objects
-        self.ocatari_state = state
         logic_state, neural_state = self.extract_logic_state(state), self.extract_neural_state(raw_state)
         logic_state = logic_state.unsqueeze(0)
         return logic_state, neural_state
@@ -124,8 +100,8 @@ class NudgeEnv(NudgeBaseEnv):
             infos (dict): Additional information.
         """
         raw_state, reward, truncations, done, infos = self.env.step(action)
+        # save state in the original enviromnt to visualization
         state = self.env.objects
-        self.ocatari_state = state
         logic_state, neural_state = self.convert_state(state, raw_state)
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
