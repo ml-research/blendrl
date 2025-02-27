@@ -1,14 +1,11 @@
 import torch as th
-from nsfr.utils.common import bool_to_probs
 
 
 def player_higher_than_ball(player: th.Tensor, ball: th.Tensor) -> th.Tensor:
     player_y = player[..., 1]
     ball_y = ball[..., 1]
     dist = player_y - ball_y
-    beta = 1.0
-    prob = th.sigmoid(dist / beta)
-    return prob
+    return sigmoid_smoothing(dist > 8, temperature=4.0)
     # return bool_to_probs(player_y - ball_y > 8)
 
 
@@ -16,10 +13,7 @@ def player_lower_than_ball(player: th.Tensor, ball: th.Tensor) -> th.Tensor:
     player_y = player[..., 1]
     ball_y = ball[..., 1]
     dist = player_y - ball_y
-    beta = 1.0
-    prob = th.sigmoid(-dist / beta)
-    return prob
-    # return bool_to_probs(player_y - ball_y < 8)
+    return sigmoid_smoothing(dist < 8, temperature=4.0)
 
 
 def ball_closeto_player(player: th.Tensor, ball: th.Tensor) -> th.Tensor:
@@ -32,13 +26,13 @@ def ball_closeto_player(player: th.Tensor, ball: th.Tensor) -> th.Tensor:
 def ball_goto_enemy(ball: th.Tensor) -> th.Tensor:
     ball_x = ball[..., 0]
     ball_x2 = ball[..., 2]
-    return sigmoid_smoothing(ball_x2 - ball_x > 0,temperature=6.0)
+    return sigmoid_smoothing(ball_x2 - ball_x > 0,temperature=5.0)
 
 
 def ball_comingto_player(ball: th.Tensor) -> th.Tensor:
     ball_x = ball[..., 0]
     ball_x2 = ball[..., 2]
-    return sigmoid_smoothing(ball_x2 - ball_x < 0, temperature=6.0)
+    return sigmoid_smoothing(ball_x2 - ball_x < 0, temperature=5.0)
 
 def sigmoid_smoothing(bool_tensor: th.Tensor, temperature: float = 5.0) -> th.Tensor:
     """

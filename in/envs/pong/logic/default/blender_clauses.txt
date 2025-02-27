@@ -1,2 +1,2 @@
-neural_agent(X):-ball_closeto_player(P,B).
-logic_agent(X):-ball_closeto_player(P,B).
+neural_agent(X):-ball_comingto_player(B).
+logic_agent(X):-ball_comingto_player(B).

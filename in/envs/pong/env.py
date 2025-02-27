@@ -2,65 +2,23 @@ from typing import Sequence
 import torch
 from nudge.env import NudgeBaseEnv
 from ocatari.core import OCAtari
-import numpy as np
-import gymnasium as gym
-import torch as th
 from ocatari.ram.pong import MAX_NB_OBJECTS
-from stable_baselines3.common.atari_wrappers import (  # isort:skip
-    ClipRewardEnv,
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
-
-
-
-def make_env(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.Autoreset(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayscaleObservation(env)
-    env = gym.wrappers.FrameStackObservation(env, 4)
-    return env
-
-
-def make_env_ori(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    # env = gym.wrappers.ResizeObservation(env, (84, 84))
-    # env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
-    return env
+from blendrl.env_utils import make_env
 
 
 class NudgeEnv(NudgeBaseEnv):
     name = "pong"
-    pred2action = {
+    red2action = {
         'noop': 0,
         'fire': 1,
         'right': 2,
-        'left': 3,
-        'rightfire': 4,
-        'leftfire': 5,
+        'left': 3
     }
     pred_names: Sequence
 
     def __init__(self, mode: str, render_mode="rgb_array", render_oc_overlay=False, seed=None):
         super().__init__(mode)
-        self.env = OCAtari(env_name="Pong-v4", mode="ram",obs_mode="ori",
+        self.env = OCAtari(env_name="ALE/Pong-v5", mode="ram",obs_mode="ori",
                            render_mode=render_mode, render_oc_overlay=render_oc_overlay)
 
         self.env._env = make_env(self.env._env)
