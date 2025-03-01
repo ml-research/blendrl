@@ -2,19 +2,9 @@ from typing import Sequence
 import torch
 from nudge.env import NudgeBaseEnv
 from ocatari.core import OCAtari
-from hackatari.core import HackAtari
 from blendrl.env_utils import make_env
-import numpy as np
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
-import gymnasium
-import gymnasium as gym
-from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack
-
-from utils import load_cleanrl_envs
-
-from blendrl.env_utils import kangaroo_modifs
 
 
 class NudgeEnv(NudgeBaseEnv):
@@ -36,14 +26,7 @@ class NudgeEnv(NudgeBaseEnv):
         "up": 2,
         "right": 3,
         "left": 4,
-        "down": 5,
-        "up_right": 6,
-        "up_left": 7,
-        "up_fire": 10,
-        "left_fire": 12,
-        "right_fire": 11,
-        "up_right_fire": 14,
-        "up_left_fire": 15
+        "down": 5
     }
     pred_names: Sequence
 

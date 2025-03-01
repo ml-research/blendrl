@@ -44,7 +44,6 @@ def _in_field(obj: th.Tensor) -> th.Tensor:
     return inside_field
 
 
-
 # ---------------------------------------------------------------------------------
 # platform logic
 def _on_platform(obj1: th.Tensor, obj2: th.Tensor) -> th.Tensor:
@@ -103,8 +102,6 @@ def same_level_ladder(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
 def close_by_fruit(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     return _close_by(player, obj) * same_level(player, obj)
 
-
-
 # ---------------------------------------------------------------------------------
 # bell logic
 def close_by_bell(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
@@ -115,7 +112,6 @@ def close_by_bell(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
 # monkey logic
 def close_by_monkey(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
     return _close_by(player, obj) * same_level(player, obj)
-
 
 # ---------------------------------------------------------------------------------
 # coconut logic
@@ -159,11 +155,6 @@ def _close_by(player: th.Tensor, obj: th.Tensor, temperature: float = 6.0) -> th
 
 
 #def _close_by(player: th.Tensor, obj: th.Tensor, temperature: float = 5.0) -> th.Tensor:
-    """
-    Compute probability that a player is close to an object using sigmoid smoothing.
-    :param temperature: Controls probability smoothness.
-    :return: Probability Tensor (0.0 to 1.0).
-    """
     # PLAYER_WIDTH, PLAYER_HEIGHT = 8, 24
     # player_x, player_y = player[:, 1], player[:, 2]
     # obj_x, obj_y = obj[:, 1], obj[:, 2]
@@ -203,11 +194,9 @@ def is_lower_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
     Check if one or more objects are horizontally lower than the player using union probability.
     """
     results = []
-    # Compute individual probabilities using the is_lower function.
     for obj in objects:
         results.append(is_lower(player, obj))
-    # Stack the individual probability tensors.
-    stacked = th.stack(results)  # Shape: [number_of_objects, ...]
+    stacked = th.stack(results)
     # Compute the union probability assuming independence:
     # P(at least one) = 1 - (1 - p1) * (1 - p2) * ... * (1 - p_n)
     combined_prob = 1 - th.prod(1 - stacked, dim=0)
@@ -232,7 +221,7 @@ def too_high_to_jump_combi(player: th.Tensor, *objects: th.Tensor) -> th.Tensor:
     results = []
     for obj in objects:
         results.append(too_high_to_jump(player, obj))
-    stacked = th.stack(results)  # Shape: [number_of_objects, ...]
+    stacked = th.stack(results)
     # Combine the probabilities using the union probability formula:
     # P(at least one) = 1 - ∏ (1 - p_i)
     combined_prob = 1 - th.prod(1 - stacked, dim=0)
@@ -321,6 +310,7 @@ def above_combi(player: th.Tensor, *objects: th.Tensor, vertical_tolerance: floa
     stacked = th.stack(results)  # Shape: [number_of_objects, ...]
     # Probability that at least one object is above = 1 - (1 - p1)*(1 - p2)*...*(1 - p_n)
     return 1 - th.prod(1 - stacked, dim=0)
+
 
 def test_predicate_global(global_state: th.Tensor) -> th.Tensor:
     result = global_state[..., 0, 2] < 100
