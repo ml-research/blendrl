@@ -3,12 +3,9 @@ from typing import Sequence
 import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
 from blendrl.env_utils import make_env
-from hackatari.core import HackAtari
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
-import gymnasium as gym
 from ocatari.core import OCAtari
-from rtpt import RTPT
 
 import time
 
@@ -34,14 +31,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         "up": 2,
         "right": 3,
         "left": 4,
-        "down": 5,
-        "up_right": 6,
-        "up_left": 7,
-        "up_fire": 10,
-        "left_fire": 12,
-        "right_fire": 11,
-        "up_right_fire": 14,
-        "up_left_fire": 15
+        "down": 5
     }
     pred_names: Sequence
 
@@ -66,7 +56,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         super().__init__(mode)
         # set up multiple envs
         self.n_envs = n_envs
-        # initialize each HackAtari environment
         # self.envs = [
         #     HackAtari(
         #         env_name="ALE/Kangaroo-v5",
@@ -94,7 +83,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
 
         self.n_actions = len(self.pred2action)
         self.n_raw_actions = 18
-        self.n_objects = 49
+        self.n_objects = 40
         self.n_features = 4  # visible, x-pos, y-pos, right-facing
         self.seed = seed
 
