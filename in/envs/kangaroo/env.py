@@ -2,6 +2,9 @@ from typing import Sequence
 import torch
 from nudge.env import NudgeBaseEnv
 from ocatari.core import OCAtari
+from hackatari.core import HackAtari
+from blendrl.env_utils import make_env
+import numpy as np
 import torch as th
 from ocatari.ram.kangaroo import MAX_ESSENTIAL_OBJECTS
 import gymnasium
@@ -11,44 +14,7 @@ from stable_baselines3.common.vec_env import VecFrameStack
 
 from utils import load_cleanrl_envs
 
-
-from stable_baselines3.common.atari_wrappers import (  # isort:skip
-    ClipRewardEnv,
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
-
-
-def make_env(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.Autoreset(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayscaleObservation(env)
-    env = gym.wrappers.FrameStackObservation(env, 4)
-    return env
-
-
-def make_env_ori(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    # env = gym.wrappers.ResizeObservation(env, (84, 84))
-    # env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
-    return env
+from blendrl.env_utils import kangaroo_modifs
 
 
 class NudgeEnv(NudgeBaseEnv):
@@ -151,17 +117,19 @@ class NudgeEnv(NudgeBaseEnv):
         """
         raw_state, reward, truncations, done, infos = self.env.step(action)
         state = self.env.objects
+        self.ocatari_state = state
         logic_state, neural_state = self.convert_state(state, raw_state)
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
 
-    def extract_logic_state(self, raw_state):
+    def extract_logic_state(self, input_state):
         """
         Extracts the logic state from the input state.
         Args:
             input_state (list): List of objects in the environment.
         Returns:
             torch.Tensor: Logic state.
+
         Comment:
             in ocatari/ram/kangaroo.py :
                 MAX_ESSENTIAL_OBJECTS = {
@@ -183,7 +151,7 @@ class NudgeEnv(NudgeBaseEnv):
 
         obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
 
-        for obj in raw_state:
+        for obj in input_state:
             if obj.category not in self.relevant_objects:
                 continue
             idx = self.obj_offsets[obj.category] + obj_count[obj.category]
@@ -213,5 +181,4 @@ class NudgeEnv(NudgeBaseEnv):
         """
         Close the environment.
         """
-        for env in self.envs:
-            env.close()
+        self.env.close()

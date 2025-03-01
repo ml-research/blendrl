@@ -34,13 +34,10 @@ class NudgeEnv(NudgeBaseEnv):
         self, mode: str, render_mode="rgb_array", render_oc_overlay=False, seed=None
     ):
         super().__init__(mode)
-        # self.env = OCAtari(env_name="Seaquest-v4", mode="ram", obs_mode="ori",
-        #                    render_mode=render_mode, render_oc_overlay=render_oc_overlay)
         self.env = HackAtari(
             env_name="ALE/Seaquest-v5",
             mode="ram",
             obs_mode="ori",
-            #  modifs=[("disable_enemies")],
             rewardfunc_path="in/envs/seaquest/blenderl_reward.py",
             render_mode=render_mode,
             render_oc_overlay=render_oc_overlay,
@@ -63,44 +60,20 @@ class NudgeEnv(NudgeBaseEnv):
 
     def reset(self):
         obs, _ = self.env.reset(seed=self.seed)
-        # raw_state, _ = self.raw_env.reset(seed=self.seed)
-        # raw_state = raw_state.unsqueeze(0)
         state = self.env.objects
         raw_state = obs  # self.env.dqn_obs
         logic_state, neural_state = self.extract_logic_state(
             state
         ), self.extract_neural_state(raw_state)
-        # if len(logic_state.shape) == 2:
         logic_state = logic_state.unsqueeze(0)
         return logic_state, neural_state
-        # return  self.convert_state(state, raw_state)
 
     def step(self, action, is_mapped: bool = False):
-        # if not is_mapped:
-        #     action = self.map_action(action)
-        # step RAM env
-        # obs, reward, done, _, _ = self.env.step(action)
-        # action = array([2]) or action = torch.tensor(2)
-        # try:
-        #     assert action.shape[0] == 1, "invalid only 1 action for env.step"
-        #     action = action[0]
-        # except IndexError:
-        #     action = action
-
-        # obs, reward, done, truncations, infos = self.env.step(action)
         obs, reward, truncations, done, infos = self.env.step(action)
 
-        # ste RGB env
-        # x = self.raw_env.step(action.unsqueeze(0))
-        # raw_obs, raw_reward, raw_done, _, _ = x
-        # assert reward == raw_reward and done == raw_done, "Two envs conflict: rewards: {} and {}, dones: {} and {}".format(reward, raw_reward, done, raw_done)
-        # assert done == raw_done, "Two envs conflict: dones: {} and {}".format(done, raw_done)
         state = self.env.objects
         raw_state = obs  # self.env.dqn_obs
-        # raw_state = raw_obs
-        # raw_state = raw_state.unsqueeze(0)
         logic_state, neural_state = self.convert_state(state, raw_state)
-        # if len(logic_state.shape) == 2:
         logic_state = logic_state.unsqueeze(0)
         return (logic_state, neural_state), reward, done, truncations, infos
 
@@ -127,7 +100,6 @@ class NudgeEnv(NudgeBaseEnv):
         return state
 
     def extract_neural_state(self, raw_input_state):
-        # print(raw_input_state.shape)
         return torch.Tensor(raw_input_state).unsqueeze(0)  # .float()
 
     def close(self):
