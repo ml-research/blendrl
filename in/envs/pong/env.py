@@ -8,7 +8,7 @@ from blendrl.env_utils import make_env
 
 class NudgeEnv(NudgeBaseEnv):
     name = "pong"
-    red2action = {
+    pred2action = {
         'noop': 0,
         'fire': 1,
         'right': 2,
@@ -27,8 +27,7 @@ class NudgeEnv(NudgeBaseEnv):
         self.n_objects = 3
         self.n_features = 4
         self.seed = seed
-        self.object_memory = {}
-
+       
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
         offset = 0
@@ -52,55 +51,17 @@ class NudgeEnv(NudgeBaseEnv):
         return (logic_state, neural_state), reward, done, truncations, infos
 
     def extract_logic_state(self, raw_state):
-        # n_features = 4
-        # n_objects = 3
-        # logic_state = np.zeros((n_objects, n_features))
-        # for i, entity in enumerate(raw_state):
-        #     if entity.category == "player":
-        #         logic_state[i][0] = 1
-        #     elif entity.category == 'ball':
-        #         logic_state[i][1] = 1
-        #     elif "enemy" in entity.category:
-        #         logic_state[i][2] = 1
-        #     logic_state[i][-4:] = np.array(entity.h_coords).flatten()
-        #     return th.tensor(logic_state)
+        logic_state = np.zeros((self.n_objects, self.n_features))
+        for i, entity in enumerate(raw_state):
+            if entity.category == "player":
+                logic_state[i][0] = 1
+            elif entity.category == 'ball':
+                logic_state[i][1] = 1
+            elif "enemy" in entity.category:
+                logic_state[i][2] = 1
+            logic_state[i][-4:] = np.array(entity.h_coords).flatten()
+        return torch.tensor(logic_state)
 
-        state = torch.zeros((self.n_objects, self.n_features), dtype=torch.float32)
-        for idx, obj in enumerate(raw_state):
-            if obj.category == "player":
-                state[idx][0] = 1
-            elif obj.category == "ball":
-                state[idx][1] = 1
-            elif "enemy" in obj.category:
-                state[idx][2] = 1
-
-            current_x, current_y = obj.center
-            # Retrieve previous coordinates from memory (if available)
-            prev_x, prev_y = self.object_memory.get(obj.category, (current_x, current_y))
-            # Store previous and current coordinates
-            state[idx][-4:] = torch.tensor([prev_x, prev_y, current_x, current_y], dtype=torch.float32)
-            # Update object_memory with current position
-            self.object_memory[obj.category] = (current_x, current_y)
-        return state
-
-
-    # def extract_neural_state(self, raw_state):
-    #     #ppimport pdb;pdb.set_trace()
-    #     neural_state = torch.zeros((3,4))
-    #     for i, inst in enumerate(raw_state):
-    #         if inst.category == "Player":
-    #             neural_state[0] = torch.tensor(inst.h_coords).flatten()
-    #        # elif inst.category == "Enemy":
-    #        #    #  neural_state.append([0, 1, 0, 0] + list(inst.xy) + list(inst.prev_xy))
-    #        #  elif "Ball" in inst.category:
-    #        #      neural_state.append([0, 0, 1, 0] + list(inst.xy) + list(inst.prev_xy))
-    #        #  #else:
-    #            # neural_state.append([0, 0, 0, 1] + list(inst.xy) + list(inst.prev_xy))
-    #
-    #     # if len(neural_state) < 11:
-    #     #    neural_state.extend([[0] * 6 for _ in range(11 - len(neural_state))])
-
-        #return neural_state
 
     def extract_neural_state(self, raw_state):
         return torch.Tensor(raw_state).unsqueeze(0)

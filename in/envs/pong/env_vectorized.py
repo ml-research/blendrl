@@ -153,7 +153,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
                 logic_state[idx][2] = 1
             logic_state[idx][-4:] = np.array(obj.h_coords).flatten()
         return torch.tensor(logic_state, dtype=torch.float32)
-        return state
+        
 
     def extract_neural_state(self, raw_input_state):
         """
