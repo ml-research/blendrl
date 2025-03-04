@@ -62,6 +62,7 @@ class ExpTree(Transformer):
     def predicate(self, alphas):
         print("test", self.lang.preds)
         pred = [p for p in self.lang.preds if p.name == alphas[0]][0]
+        print("pred", pred)
         return pred
 
     def term(self, content):
