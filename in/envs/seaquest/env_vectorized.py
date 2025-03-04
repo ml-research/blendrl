@@ -1,41 +1,11 @@
 from typing import Sequence
-import torch
 from blendrl.env_vectorized import VectorizedNudgeBaseEnv
-from ocatari.core import OCAtari
-import numpy as np
+from blendrl.env_utils import make_env
 import torch as th
-from ocatari.ram.seaquest import MAX_ESSENTIAL_OBJECTS
-import gymnasium
+from ocatari.ram.seaquest import MAX_NB_OBJECTS
 import gymnasium as gym
-from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack
 from hackatari.core import HackAtari
-from utils import load_cleanrl_envs
-
-
-from stable_baselines3.common.atari_wrappers import (  # isort:skip
-    ClipRewardEnv,
-    EpisodicLifeEnv,
-    FireResetEnv,
-    MaxAndSkipEnv,
-    NoopResetEnv,
-)
-
-
-def make_env(env):
-    env = gym.wrappers.RecordEpisodeStatistics(env)
-    env = gym.wrappers.AutoResetWrapper(env)
-    env = NoopResetEnv(env, noop_max=30)
-    env = MaxAndSkipEnv(env, skip=4)
-    env = EpisodicLifeEnv(env)
-    if "FIRE" in env.unwrapped.get_action_meanings():
-        env = FireResetEnv(env)
-    env = ClipRewardEnv(env)
-    env = gym.wrappers.ResizeObservation(env, (84, 84))
-    env = gym.wrappers.GrayScaleObservation(env)
-    env = gym.wrappers.FrameStack(env, 4)
-    return env
-
+from ocatari.core import OCAtari
 
 class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     name = "seaquest"
@@ -61,12 +31,10 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         # set up multiple envs
         self.n_envs = n_envs
         self.envs = [
-            HackAtari(
+            OCAtari(
                 env_name="ALE/Seaquest-v5",
                 mode="ram",
                 obs_mode="ori",
-                modifs=[("disable_coconut"), ("random_init"), ("change_level0")],
-                rewardfunc_path="in/envs/seaquest/blenderl_reward.py",
                 render_mode=render_mode,
                 render_oc_overlay=render_oc_overlay,
             )
@@ -77,7 +45,6 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             self.envs[i]._env = make_env(self.envs[i]._env)
 
         # for learning script from cleanrl
-        # self.env._env = make_env(self.env._env)
         self.n_actions = 6
         self.n_raw_actions = 18
         self.n_objects = 43
@@ -87,10 +54,10 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         # Compute index offsets. Needed to deal with multiple same-category objects
         self.obj_offsets = {}
         offset = 0
-        for obj, max_count in MAX_ESSENTIAL_OBJECTS.items():
+        for obj, max_count in MAX_NB_OBJECTS.items():
             self.obj_offsets[obj] = offset
             offset += max_count
-        self.relevant_objects = set(MAX_ESSENTIAL_OBJECTS.keys())
+        self.relevant_objects = set(MAX_NB_OBJECTS.keys())
 
     def reset(self):
         logic_states = []
@@ -99,7 +66,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
         for env in self.envs:
             obs, _ = env.reset(seed=seed_i)
             # lazy frame to tensor
-            obs = torch.tensor(obs).float()
+            obs = th.tensor(obs).float()
             state = env.objects
             raw_state = obs  # self.env.dqn_obs
             logic_state, neural_state = self.extract_logic_state(
@@ -108,7 +75,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             logic_states.append(logic_state)
             neural_states.append(neural_state)
             seed_i += 1
-        return torch.stack(logic_states), torch.stack(neural_states)
+        return th.stack(logic_states), th.stack(neural_states)
 
     def step(self, actions, is_mapped: bool = False):
         assert (
@@ -128,7 +95,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             # make a step in the env
             obs, reward, truncation, done, info = env.step(action)
             # lazy frame to tensor
-            obs = torch.tensor(obs).float()
+            obs = th.tensor(obs).float()
             # get logic and neural state
             state = env.objects
             raw_state = obs
@@ -142,9 +109,9 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
             infos.append(info)
             # store final info
 
-        # observations = torch.stack(observations)
+        # observations = th.stack(observations)
         return (
-            (torch.stack(logic_states), torch.stack(neural_states)),
+            (th.stack(logic_states), th.stack(neural_states)),
             rewards,
             truncations,
             dones,
@@ -154,7 +121,7 @@ class VectorizedNudgeEnv(VectorizedNudgeBaseEnv):
     def extract_logic_state(self, input_state):
         state = th.zeros((self.n_objects, self.n_features), dtype=th.int32)
 
-        obj_count = {k: 0 for k in MAX_ESSENTIAL_OBJECTS.keys()}
+        obj_count = {k: 0 for k in MAX_NB_OBJECTS.keys()}
 
         for obj in input_state:
             if obj.category not in self.relevant_objects:
