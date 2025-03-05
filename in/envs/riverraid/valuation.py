@@ -47,7 +47,6 @@ def same_level_river(player: th.Tensor, river: th.Tensor) -> th.Tensor:
     return bool_to_probs(abs(player[..., 2] - river[..., 2]) < 6) * river[..., 0]
 
 
-
 def test_predicate_global(global_state: th.Tensor) -> th.Tensor:
     result = global_state[..., 0, 2] < 100
     return bool_to_probs(result)
