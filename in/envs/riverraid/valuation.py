@@ -2,73 +2,50 @@ import torch as th
 
 from nsfr.utils.common import bool_to_probs
 
+def on_river(player: th.Tensor, river: th.Tensor) -> th.Tensor:
+    return bool_to_probs(player[..., 0] == 1) * river[..., 0]
 
-# def climbing(player: th.Tensor) -> th.Tensor:
-#     status = player[..., 3]
-#     return bool_to_probs(status == 12)
+def right_of_river(player: th.Tensor, river: th.Tensor) -> th.Tensor:
+    return bool_to_probs(player[..., 1] > river[..., 1]) * river[..., 0]
 
+def left_of_river(player: th.Tensor, river: th.Tensor) -> th.Tensor:
+    return bool_to_probs(player[..., 1] < river[..., 1]) * river[..., 0]
 
-# def not_climbing(player: th.Tensor) -> th.Tensor:
-#     status = player[..., 3
-#     return bool_to_probs(status != 12)
+def false_predicate(player: th.Tensor) -> th.Tensor:
+    return bool_to_probs(th.tensor([False]))
 
+def on_bridge_player(player: th.Tensor, bridge: th.Tensor) -> th.Tensor:
+    return bool_to_probs((player[..., 1] > bridge[..., 1]) & (player[..., 1] < bridge[..., 1] + bridge[..., 3])) * bridge[..., 0]
 
-def nothing_around(objs: th.Tensor) -> th.Tensor:
-    # target objects: fruit, bell, monkey, fallingcoconut, throwncoconut
-    fruits = objs[:, 2:5]
-    bell = objs[:, 5].unsqueeze(1)
-    monkey = objs[:, 32:36]
-    falling_coconut = objs[:, 36].unsqueeze(1)
-    thrown_coconut = objs[:, 37:40]
-    # target_objs = th.cat([fruits, bell, monkey, falling_coconut, thrown_coconut], dim=1)
-    target_objs = th.cat([monkey, falling_coconut, thrown_coconut], dim=1)
-    players = objs[:, 0].unsqueeze(1).expand(-1, target_objs.size(1), -1)
+def on_bridge_river(bridge: th.Tensor, river: th.Tensor) -> th.Tensor:
+    return bool_to_probs((bridge[..., 1] > river[..., 1]) & (bridge[..., 1] < river[..., 1] + river[..., 3])) * river[..., 0]
 
-    # batch_size * num_target_objs
-    probs = th.stack(
-        [
-            _close_by(players[:, i, :], target_objs[:, i, :])
-            for i in range(target_objs.size(1))
-        ],
-        dim=1,
-    )
+def close_by_fuel(player: th.Tensor, fuel: th.Tensor) -> th.Tensor:
+    return _close_by(player, fuel)
 
-    max_closeby_prob, _ = probs.max(dim=1)
-    result = (1.0 - max_closeby_prob).float()
-    return result
+def close_by_enemy_ship(player: th.Tensor, enemy_ship: th.Tensor) -> th.Tensor:
+    return _close_by(player, enemy_ship)
 
+def close_by_helicopter(player: th.Tensor, helicopter: th.Tensor) -> th.Tensor:
+    return _close_by(player, helicopter)
+
+def close_by_bullet(player: th.Tensor, bullet: th.Tensor) -> th.Tensor:
+    return _close_by(player, bullet)
+
+def close_by_enemy_base(player: th.Tensor, enemy_base: th.Tensor) -> th.Tensor:
+    return _close_by(player, enemy_base)
 
 def _close_by(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    th = 32
-    player_x = player[:, 1]
-    player_y = player[:, 2]
-    obj_x = obj[:, 1]
-    obj_y = obj[:, 2]
-    obj_prob = obj[:, 0]
-    x_dist = (player_x - obj_x).pow(2)
-    y_dist = (player_y - obj_y).pow(2)
-    dist = (x_dist + y_dist).sqrt()
-    # dist = (player[:, 1:2] - obj[:, 1:2]).pow(2).sum(1).sqrt()
-    return bool_to_probs(dist < th) * obj_prob * _in_field(obj)
-    # result = th.clip((128 - abs(player_x - obj_x) - abs(player_y - obj_y)) / 128, 0, 1) * obj_prob
-    # return result
+    threshold = 48
+    dist = (player[:, 1:3] - obj[:, 1:3]).pow(2).sum(1).sqrt()
+    return bool_to_probs(dist < threshold) * obj[..., 0]
 
+def nothing_around(image: th.Tensor) -> th.Tensor:
+    return bool_to_probs(th.all(image == 0))
 
-def _not_close_by(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    player_x = player[..., 1]
-    player_y = player[..., 2]
-    obj_x = obj[..., 1]
-    obj_y = obj[..., 2]
-    result = th.clip((abs(player_x - obj_x) + abs(player_y - obj_y) - 64) / 64, 0, 1)
-    return result
+def same_level_river(player: th.Tensor, river: th.Tensor) -> th.Tensor:
+    return bool_to_probs(abs(player[..., 2] - river[..., 2]) < 6) * river[..., 0]
 
-
-def not_close_by_missile(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _not_close_by(player, obj)
-
-
-def not_close_by_enemy(player: th.Tensor, obj: th.Tensor) -> th.Tensor:
-    return _not_close_by(player, obj)
 
 
 def test_predicate_global(global_state: th.Tensor) -> th.Tensor:
