@@ -1,0 +1,10 @@
+algorithm: deictic
+environment: seaquest
+rules: default
+update_steps: 128
+device: cuda:0
+lr_actor: 2.5e-3
+lr_critic: 2.5e-3
+label: hybrid_actor_neural_meta_e3_step128
+actor_mode: hybrid
+meta_mode: neural

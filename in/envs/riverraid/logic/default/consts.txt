@@ -1,0 +1,17 @@
+image:img
+
+oplayer:obj1
+
+omissile:obj2
+
+ofueldepot:obj3,obj4,obj5,obj6
+
+otanker:obj7,obj8,obj9,obj10
+
+ohelicopter:obj11,obj12,obj13,obj14
+
+ohouse:obj15,obj16,obj17,obj18
+
+ojet:obj19,obj20,obj21,obj22
+
+obridge:obj23

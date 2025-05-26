@@ -1,0 +1,11 @@
+move_up(X):-higher_than_alien(P,A),visible_alien(A).
+move_down(X):-lower_than_alien(P,A),visible_alien(A).
+move_left(X):-right_of_alien(P,A),visible_alien(A).
+move_right(X):-left_of_alien(P,A),visible_alien(A).
+fire(X):-close_by_alien(P,A),visible_alien(A).
+collect_egg(X):-close_by_egg(P,E),visible_egg(E).
+interact_pulsar(X):-close_by_pulsar(P,G),visible_pulsar(G).
+avoid_alien(X):-close_by_alien(P,A),visible_alien(A).
+retreat(X):-many_aliens(X).
+approach_egg(X):-some_eggs_remaining(X).
+approach_pulsar(X):-visible_pulsar(G).

@@ -1,0 +1,13 @@
+on_ladder:2:oplayer,oladder
+right_of_ladder:2:oplayer,oladder
+left_of_ladder:2:oplayer,oladder
+false_predicate:1:oplayer
+on_pl_ladder:2:oladder,oplatform
+on_pl_player:2:oplayer,oplatform
+close_by_fruit:2:oplayer,ofruit
+close_by_bell:2:oplayer,obell
+close_by_monkey:2:oplayer,omonkey
+close_by_throwncoconut:2:oplayer,othrowncoconut
+close_by_fallingcoconut:2:oplayer,ofallingcoconut
+nothing_around:1:image
+same_level_ladder:2:oplayer,oladder

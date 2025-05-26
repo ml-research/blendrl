@@ -1,0 +1,5 @@
+neural_agent(X):-close_by_alien(P,A).
+neural_agent(X):-close_by_rocket(P,R).
+logic_agent(X):-visible_egg(E).
+logic_agent(X):-low_lives(L).
+logic_agent(X):-all_eggs_destroyed(X).

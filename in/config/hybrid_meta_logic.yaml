@@ -1,0 +1,10 @@
+algorithm: deictic
+environment: seaquest
+rules: default
+update_steps: 256
+device: cuda:0
+lr_actor: 2.5e-3
+lr_critic: 2.5e-3
+label: hybrid_meta_logic_e3_step256
+actor_mode: hybrid
+meta_mode: logic

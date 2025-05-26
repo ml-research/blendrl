@@ -1,0 +1,8 @@
+oplayer:obj1
+oalien:obj2,obj3,obj4,obj5,obj6,obj7,obj8,obj9,obj10,obj11,obj12,obj13
+opulsar:obj14
+orocket:obj15
+oegg:obj16,obj17,obj18,obj19,obj20,obj21,obj22,obj23,obj24,obj25,obj26,obj27,obj28,obj29,obj30,obj31,obj32,obj33,obj34,obj35,obj36,obj37,obj38,obj39,obj40,obj41,obj42,obj43,obj44,obj45,obj46,obj47,obj48,obj49,obj50,obj51,obj52,obj53,obj54,obj55,obj56,obj57,obj58,obj59,obj60,obj61,obj62,obj63,obj64,obj65,obj66,obj67,obj68,obj69,obj70,obj71,obj72,obj73,obj74,obj75,obj76,obj77,obj78,obj79,obj80,obj81,obj82,obj83,obj84,obj85,obj86,obj87,obj88,obj89,obj90,obj91,obj92,obj93,obj94,obj95,obj96,obj97,obj98,obj99,obj100,obj101,obj102,obj103,obj104,obj105,obj106,obj107,obj108,obj109,obj110,obj111,obj112,obj113,obj114,obj115,obj116,obj117,obj118,obj119,obj120,obj121,obj122,obj123,obj124,obj125,obj126,obj127,obj128,obj129,obj130,obj131,obj132,obj133,obj134,obj135,obj136,obj137,obj138,obj139,obj140,obj141,obj142,obj143,obj144,obj145,obj146,obj147,obj148,obj149,obj150,obj151,obj152,obj153,obj154,obj155,obj156
+oscore:obj157
+olife:obj158
+image:img

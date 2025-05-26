@@ -1,0 +1,10 @@
+algorithm: blend
+environment: seaquest
+rules: default
+update_steps: 1024
+device: cuda:0
+lr_actor: 2.5e-4
+lr_critic: 2.5e-4
+label: hybrid_actor_neural_meta_e4_step1024
+actor_mode: hybrid
+meta_mode: neural

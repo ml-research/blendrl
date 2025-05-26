@@ -1,0 +1,3 @@
+python train_blenderl.py --env-name alien --joint-training --num-steps 64 --num-envs 2 --gamma 0.99
+
+python play_gui.py --env-name alien --agent-path out/runs/alien_softmax_blender_logic_lr_0.00025_llr_0.00025_blr_0.00025_gamma_0.99_bentcoef_0.01_numenvs_2_steps_64__0
