@@ -1,0 +1,2 @@
+neural_agent(X):-not_facing_task(T).
+logic_agent(X):-facing_task(T),not_completed(T).

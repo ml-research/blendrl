@@ -1,0 +1,3 @@
+facing_task:2:oplayer,otask
+not_completed:1:otask
+completed:1:otask
