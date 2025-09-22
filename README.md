@@ -24,7 +24,7 @@ Follow [INSTALLATION.md](INSTALLATION.md) to install dependencies.
 
 Download the trained agents:
 ```
-wget https://hessenbox.tu-darmstadt.de/dl/fiCNznPuWkALH8JaCJWHeeAV/models.zip
+wget https://next.hessenbox.de/index.php/s/NbJArsWJXHeAZjt/download -O models.zip
 unzip models.zip
 rm models.zip
 ```
